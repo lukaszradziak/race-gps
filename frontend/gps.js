@@ -1,16 +1,21 @@
 var myCharacteristic;
+var bluetoothDevice;
 
-function log(data) {
-  console.log('GPS', data)
-}
-
-function onStartButtonClick(callback) {
+function onStartButtonClick(callback, log) {
   let serviceUuid = '65316b7c-b605-45b4-be6d-b02473b0d29a';
   let characteristicUuid = 'c8ad396d-8006-488d-beed-3a55c4b5ccae';
 
+  bluetoothDevice = null;
   log('Requesting Bluetooth Device...');
+
+  if (!navigator.bluetooth) {
+    log('Browser not supporting bluetooth');
+    return;
+  }
+
   navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
   .then(device => {
+    bluetoothDevice = device;
     log('Connecting to GATT Server...');
     return device.gatt.connect();
   })
@@ -34,12 +39,23 @@ function onStartButtonClick(callback) {
   });
 }
 
-function onStopButtonClick(callback) {
+function onStopButtonClick(callback, log) {
   if (myCharacteristic) {
     myCharacteristic.stopNotifications()
     .then(_ => {
       log('> Notifications stopped');
       myCharacteristic.removeEventListener('characteristicvaluechanged', callback);
+
+      if (!bluetoothDevice) {
+        return;
+      }
+      log('Disconnecting from Bluetooth Device...');
+      if (bluetoothDevice.gatt.connected) {
+        bluetoothDevice.gatt.disconnect();
+        log('Disconnected');
+      } else {
+        log('> Bluetooth Device is already disconnected');
+      }
     })
     .catch(error => {
       log('Argh! ' + error);
@@ -51,6 +67,7 @@ export function setupGps(element) {
   const $connect = element.querySelector('button.connect')
   const $disconnect = element.querySelector('button.disconnect')
   const $data = element.querySelector('.data')
+  const $log = element.querySelector('.log')
 
   const onData = (event) => {
     const value = event.target.value
@@ -69,6 +86,10 @@ export function setupGps(element) {
     ].join(' ')
   }
 
-  $connect.addEventListener('click', () => onStartButtonClick(onData))
-  $disconnect.addEventListener('click', () => onStopButtonClick(onData))
+  const log = (data) => {
+    $log.innerText = data;
+  }
+
+  $connect.addEventListener('click', () => onStartButtonClick(onData, log))
+  $disconnect.addEventListener('click', () => onStopButtonClick(onData, log))
 }
