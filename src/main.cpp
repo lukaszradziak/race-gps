@@ -17,6 +17,7 @@ bool oldDeviceConnected = false;
 TinyGPSPlus gps;
 SoftwareSerial ss(25, 26);
 byte data[8];
+int lastTime = 0;
 
 class MyServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) {
@@ -75,8 +76,11 @@ void loop() {
         data[6] = (time >> 8) & 0xff;
         data[7] = time & 0xff;
 
-        pCharacteristic->setValue(data, 8);
-        pCharacteristic->notify();
+        if (lastTime != time) {
+          pCharacteristic->setValue(data, 8);
+          pCharacteristic->notify();
+          lastTime = time;
+        }
       }
     }
 
