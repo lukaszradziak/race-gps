@@ -6,8 +6,8 @@
 #include <BLE2902.h>
 #include <SoftwareSerial.h>
 
-#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define SERVICE_UUID "65316b7c-b605-45b4-be6d-b02473b0d29a"
+#define CHARACTERISTIC_UUID "c8ad396d-8006-488d-beed-3a55c4b5ccae"
 
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;

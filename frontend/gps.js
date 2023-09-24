@@ -5,15 +5,8 @@ function log(data) {
 }
 
 function onStartButtonClick(callback) {
-  let serviceUuid = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-  if (serviceUuid.startsWith('0x')) {
-    serviceUuid = parseInt(serviceUuid);
-  }
-
-  let characteristicUuid = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
-  if (characteristicUuid.startsWith('0x')) {
-    characteristicUuid = parseInt(characteristicUuid);
-  }
+  let serviceUuid = '65316b7c-b605-45b4-be6d-b02473b0d29a';
+  let characteristicUuid = 'c8ad396d-8006-488d-beed-3a55c4b5ccae';
 
   log('Requesting Bluetooth Device...');
   navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
