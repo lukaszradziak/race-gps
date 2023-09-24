@@ -63,11 +63,21 @@ function onStopButtonClick(callback, log) {
   }
 }
 
+function downloadCSV(str, name = '') {
+  const hiddenElement = document.createElement('a');
+  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(str);
+  hiddenElement.target = '_blank';
+  hiddenElement.download = name ? name : `export.csv`;
+  hiddenElement.click();
+}
+
 export function setupGps(element) {
   const $connect = element.querySelector('button.connect')
   const $disconnect = element.querySelector('button.disconnect')
+  const $csv = element.querySelector('button.csv')
   const $data = element.querySelector('.data')
   const $log = element.querySelector('.log')
+  const csv = [];
 
   const onData = (event) => {
     const value = event.target.value
@@ -78,9 +88,13 @@ export function setupGps(element) {
       value.getUint8(7) * Math.pow(256, 0),
     ].reduce((a, b) => a + b, 0)
     const speed = parseFloat(value.getUint8(2)*1.852).toFixed(2)
+    const satellites = value.getUint8(3)
+
+    csv.push([time, satellites, speed])
+    $csv.innerText = `CSV (${csv.length})`
 
     $data.innerHTML = [
-      'Satellites:', value.getUint8(3), '<br>',
+      'Satellites:', satellites, '<br>',
       'Speed:', speed, '<br>',
       String(time).match(/.{1,2}/g).join(' ')
     ].join(' ')
@@ -92,4 +106,10 @@ export function setupGps(element) {
 
   $connect.addEventListener('click', () => onStartButtonClick(onData, log))
   $disconnect.addEventListener('click', () => onStopButtonClick(onData, log))
+  $csv.addEventListener('click', () => {
+    downloadCSV(
+      'time,satellites,speed\n' + csv.map(line => line.join(',')).join('\n'),
+      `race-gps-${Date.now()}.csv`
+    )
+  })
 }
