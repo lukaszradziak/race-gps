@@ -9,6 +9,7 @@ document.querySelector('#app').innerHTML = `
       <div class="data"></div>
       <button class="connect type="button">Connect</button>
       <button class="disconnect" type="button">Disconnect</button>
+      <div class="log"></div>
     </div>
   </div>
 `
