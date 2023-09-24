@@ -60,7 +60,7 @@ export function setupGps(element) {
       value.getUint8(6) * Math.pow(256, 1),
       value.getUint8(7) * Math.pow(256, 0),
     ].reduce((a, b) => a + b, 0)
-    const speed = String(value.getUint8(2)*1.852).toFixed(2)
+    const speed = parseFloat(value.getUint8(2)*1.852).toFixed(2)
 
     $data.innerHTML = [
       'Satellites:', value.getUint8(3), '<br>',
