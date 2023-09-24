@@ -77,7 +77,7 @@ export function setupGps(element) {
   const $csv = element.querySelector('button.csv')
   const $data = element.querySelector('.data')
   const $log = element.querySelector('.log')
-  const csv = [];
+  let csv = [];
 
   const onData = (event) => {
     const value = event.target.value
@@ -104,7 +104,10 @@ export function setupGps(element) {
     $log.innerText = data;
   }
 
-  $connect.addEventListener('click', () => onStartButtonClick(onData, log))
+  $connect.addEventListener('click', () => {
+    csv = []
+    onStartButtonClick(onData, log)
+  })
   $disconnect.addEventListener('click', () => onStopButtonClick(onData, log))
   $csv.addEventListener('click', () => {
     downloadCSV(
