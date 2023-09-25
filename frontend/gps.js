@@ -82,20 +82,28 @@ export function setupGps(element) {
   const onData = (event) => {
     const value = event.target.value
     const time = [
-      value.getUint8(4) * Math.pow(256, 3),
-      value.getUint8(5) * Math.pow(256, 2),
-      value.getUint8(6) * Math.pow(256, 1),
-      value.getUint8(7) * Math.pow(256, 0),
+      value.getUint8(5) * Math.pow(256, 3),
+      value.getUint8(6) * Math.pow(256, 2),
+      value.getUint8(7) * Math.pow(256, 1),
+      value.getUint8(8) * Math.pow(256, 0),
     ].reduce((a, b) => a + b, 0)
-    const speed = parseFloat(value.getUint8(2)*1.852).toFixed(2)
-    const satellites = value.getUint8(3)
+    const speed = ([
+      value.getUint8(2) * Math.pow(256, 1),
+      value.getUint8(3) * Math.pow(256, 0),
+    ].reduce((a, b) => a + b, 0) * 1.852).toFixed(2)
+    const alt = [
+      value.getUint8(0) * Math.pow(256, 1),
+      value.getUint8(1) * Math.pow(256, 0),
+    ].reduce((a, b) => a + b, 0)
+    const satellites = value.getUint8(4)
 
-    csv.push([time, satellites, speed])
+    csv.push([time, satellites, alt, speed])
     $csv.innerText = `CSV (${csv.length})`
 
     $data.innerHTML = [
       'Satellites:', satellites, '<br>',
       'Speed:', speed, '<br>',
+      'Alt:', alt, '<br>',
       String(time).match(/.{1,2}/g).join(' ')
     ].join(' ')
   }
@@ -111,7 +119,7 @@ export function setupGps(element) {
   $disconnect.addEventListener('click', () => onStopButtonClick(onData, log))
   $csv.addEventListener('click', () => {
     downloadCSV(
-      'time,satellites,speed\n' + csv.map(line => line.join(',')).join('\n'),
+      'time,satellites,alt,speed\n' + csv.map(line => line.join(',')).join('\n'),
       `race-gps-${Date.now()}.csv`
     )
   })
