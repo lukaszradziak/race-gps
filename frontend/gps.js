@@ -90,7 +90,7 @@ export function setupGps(element) {
     const speed = ([
       value.getUint8(2) * Math.pow(256, 1),
       value.getUint8(3) * Math.pow(256, 0),
-    ].reduce((a, b) => a + b, 0) * 1.852).toFixed(2)
+    ].reduce((a, b) => a + b, 0) / 100 * 1.852).toFixed(4)
     const alt = [
       value.getUint8(0) * Math.pow(256, 1),
       value.getUint8(1) * Math.pow(256, 0),
