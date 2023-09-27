@@ -50,18 +50,15 @@ export function GpsComponent (element) {
 
   const measure = new Measure(
     (result) => {
-      const time = ((result.records[1].time - result.records[0].time) / 100).toFixed(2);
-      $testSpeedResult.innerHTML = `
-        <h2>${result.start}-${result.end}: ${time}s</h2>
-        <pre>${JSON.stringify(result, null, 2)}</pre>
-      ` + $testSpeedResult.innerHTML;
+      const time = ((result.records[result.records.length - 1].time - result.records[0].time) / 100).toFixed(2);
+      $testSpeedResult.innerHTML = `<li>${result.start}-${result.end}: ${time}s</li>` + $testSpeedResult.innerHTML;
+      console.log(result);
     }
   );
   measure.addConfig(0, 60);
   measure.addConfig(0, 100);
   measure.addConfig(100, 150);
   measure.addConfig(100, 200);
-  measure.addConfig(100, 0);
 
   $testSpeed.addEventListener('input', (event) => {
     const speed = event.target.value;
