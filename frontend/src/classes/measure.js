@@ -23,7 +23,6 @@ export class Measure {
       speed: parseFloat(speed),
       time: parseInt(time)
     };
-    this.records.push(record);
 
     for (const configRow of this.config) {
       if (speed <= configRow.start) {
@@ -47,5 +46,7 @@ export class Measure {
         configRow.records.push(record);
       }
     }
+
+    this.records.push(record);
   }
 }
