@@ -1,7 +1,6 @@
 export class Measure {
   config = [];
   records = [];
-  results = [];
   onNewResult = () => {};
 
   constructor (onNewResult = () => {}) {
@@ -12,6 +11,7 @@ export class Measure {
     this.config.push({
       start,
       end,
+      ready: false,
       started: false,
       records: []
     });
@@ -22,14 +22,22 @@ export class Measure {
     this.records.push(record);
 
     for (const configRow of this.config) {
-      if (!configRow.started && speed > configRow.start + 1 && speed < configRow.end + 1) {
-        console.log(`started ${configRow.start}-${configRow.end}`);
+      if (speed <= configRow.start) {
+        configRow.ready = true;
+      }
+
+      if (speed > configRow.end) {
+        configRow.ready = false;
+      }
+
+      if (!configRow.started && configRow.ready && speed > configRow.start) {
         configRow.started = true;
+        configRow.records = [];
         configRow.records.push(record);
-      } else if (configRow.started && speed > configRow.end + 1) {
-        console.log(`ended ${configRow.start}-${configRow.end}`);
+      } else if (configRow.started && speed > configRow.end) {
         configRow.started = false;
-        this.onNewResult(`ended ${configRow.start}-${configRow.end}`);
+        configRow.records.push(record);
+        this.onNewResult(configRow);
       }
     }
   }
