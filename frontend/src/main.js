@@ -1,6 +1,6 @@
-import './styles/main.css'
+import './styles/main.css';
 
-import {GpsComponent} from "./components/gps-component.js";
+import { GpsComponent } from './components/gps-component.js';
 
 document.querySelector('#app').innerHTML = `
   <div>
@@ -14,6 +14,6 @@ document.querySelector('#app').innerHTML = `
       <div class="log"></div>
     </div>
   </div>
-`
+`;
 
-GpsComponent(document.querySelector('#gps'))
+GpsComponent(document.querySelector('#gps'));

@@ -1,9 +1,9 @@
 let myCharacteristic;
 let bluetoothDevice;
 
-export function onStartButtonClick(callback, log) {
-  let serviceUuid = '65316b7c-b605-45b4-be6d-b02473b0d29a';
-  let characteristicUuid = 'c8ad396d-8006-488d-beed-3a55c4b5ccae';
+export function onStartButtonClick (callback, log) {
+  const serviceUuid = '65316b7c-b605-45b4-be6d-b02473b0d29a';
+  const characteristicUuid = 'c8ad396d-8006-488d-beed-3a55c4b5ccae';
 
   bluetoothDevice = null;
   log('Requesting Bluetooth Device...');
@@ -13,7 +13,7 @@ export function onStartButtonClick(callback, log) {
     return;
   }
 
-  navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
+  navigator.bluetooth.requestDevice({ filters: [{ services: [serviceUuid] }] })
     .then(device => {
       bluetoothDevice = device;
       log('Connecting to GATT Server...');
@@ -39,7 +39,7 @@ export function onStartButtonClick(callback, log) {
     });
 }
 
-export function onStopButtonClick(callback, log) {
+export function onStopButtonClick (callback, log) {
   if (myCharacteristic) {
     myCharacteristic.stopNotifications()
       .then(_ => {
