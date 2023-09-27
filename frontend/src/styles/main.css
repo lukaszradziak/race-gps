@@ -49,7 +49,7 @@ h1 {
   padding: 0.1em;
   will-change: filter;
   transition: filter 300ms;
-  font-size: 3em;
+  font-size: 2em;
   margin: 0;
 }
 .logo:hover {
@@ -71,6 +71,10 @@ h1 {
 .log {
   font-size: 1em;
   margin-top: 1em;
+}
+
+input.test-speed {
+  width: 100%;
 }
 
 button {

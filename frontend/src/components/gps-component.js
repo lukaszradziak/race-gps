@@ -1,5 +1,6 @@
 import { onStartButtonClick, onStopButtonClick } from '../utils/bluetooth.js';
 import { downloadCSV } from '../utils/utils.js';
+import { parseGpsData } from '../utils/gps.js';
 
 export function GpsComponent (element) {
   const $connect = element.querySelector('button.connect');
@@ -7,25 +8,12 @@ export function GpsComponent (element) {
   const $csv = element.querySelector('button.csv');
   const $data = element.querySelector('.data');
   const $log = element.querySelector('.log');
+  const $testSpeed = element.querySelector('.test-speed');
+  const $testSpeedValue = element.querySelector('.test-speed-value');
   let csv = [];
 
   const onData = (event) => {
-    const value = event.target.value;
-    const time = [
-      value.getUint8(5) * Math.pow(256, 3),
-      value.getUint8(6) * Math.pow(256, 2),
-      value.getUint8(7) * Math.pow(256, 1),
-      value.getUint8(8) * Math.pow(256, 0)
-    ].reduce((a, b) => a + b, 0);
-    const speed = ([
-      value.getUint8(2) * Math.pow(256, 1),
-      value.getUint8(3) * Math.pow(256, 0)
-    ].reduce((a, b) => a + b, 0) / 100 * 1.852).toFixed(4);
-    const alt = [
-      value.getUint8(0) * Math.pow(256, 1),
-      value.getUint8(1) * Math.pow(256, 0)
-    ].reduce((a, b) => a + b, 0);
-    const satellites = value.getUint8(4);
+    const { time, satellites, alt, speed } = parseGpsData(event.target.value);
 
     csv.push([time, satellites, alt, speed]);
     $csv.innerText = `CSV (${csv.length})`;
@@ -56,5 +44,12 @@ export function GpsComponent (element) {
       'time,satellites,alt,speed\n' + csv.map(line => line.join(',')).join('\n'),
       `race-gps-${Date.now()}.csv`
     );
+  });
+
+  $testSpeed.addEventListener('input', (event) => {
+    const speed = event.target.value;
+    const time = Date.now();
+
+    $testSpeedValue.innerText = speed;
   });
 }
