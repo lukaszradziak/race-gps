@@ -14,14 +14,16 @@ export class Measure {
       ready: false,
       started: false,
       records: [],
-      previousRecords: []
+      previousRecords: [],
+      startIndex: 0
     });
   }
 
   addRecord (speed, time) {
     const record = {
       speed: parseFloat(speed),
-      time: parseInt(time)
+      time: parseInt(time),
+      index: this.records.length
     };
 
     for (const configRow of this.config) {
@@ -37,7 +39,10 @@ export class Measure {
         configRow.started = true;
         configRow.records = [];
         configRow.records.push(record);
-        configRow.previousRecords = this.records.splice(-5);
+        configRow.previousRecords = this.records.slice(
+          this.records.length - 5,
+          this.records.length
+        );
       } else if (configRow.started && speed > configRow.end) {
         configRow.started = false;
         configRow.records.push(record);
