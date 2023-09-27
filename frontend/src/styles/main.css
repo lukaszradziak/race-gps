@@ -77,6 +77,10 @@ input.test-speed {
   width: 100%;
 }
 
+pre {
+  text-align: left;
+}
+
 button {
   display: block;
   border-radius: 8px;
