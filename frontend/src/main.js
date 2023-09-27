@@ -13,7 +13,7 @@ document.querySelector('#app').innerHTML = `
         <button class="csv" type="button">CSV</button>
         <div class="log"></div>
         <div class="test-speed-value"></div>
-        <input type="range" class="test-speed" min="0" max="300" value="30" />
+        <input type="range" class="test-speed" min="0" max="300" step="0.01" value="30" />
         <div class="test-speed-result"></div>
       </div>
     </div>
