@@ -14,6 +14,7 @@ document.querySelector('#app').innerHTML = `
         <div class="log"></div>
         <div class="test-speed-value"></div>
         <input type="range" class="test-speed" min="0" max="300" value="30" />
+        <div class="test-speed-result"></div>
       </div>
     </div>
   </div>

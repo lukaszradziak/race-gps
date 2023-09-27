@@ -1,6 +1,7 @@
 import { onStartButtonClick, onStopButtonClick } from '../utils/bluetooth.js';
 import { downloadCSV } from '../utils/utils.js';
 import { parseGpsData } from '../utils/gps.js';
+import { Measure } from './measure.js';
 
 export function GpsComponent (element) {
   const $connect = element.querySelector('button.connect');
@@ -10,6 +11,7 @@ export function GpsComponent (element) {
   const $log = element.querySelector('.log');
   const $testSpeed = element.querySelector('.test-speed');
   const $testSpeedValue = element.querySelector('.test-speed-value');
+  const $testSpeedResult = element.querySelector('.test-speed-result');
   let csv = [];
 
   const onData = (event) => {
@@ -46,10 +48,22 @@ export function GpsComponent (element) {
     );
   });
 
+  const measure = new Measure(
+    (result) => {
+      $testSpeedResult.innerHTML += `<p>${JSON.stringify(result)}</p>`;
+    }
+  );
+  measure.addConfig(0, 60);
+  measure.addConfig(0, 100);
+  measure.addConfig(100, 150);
+  measure.addConfig(100, 200);
+  measure.addConfig(100, 0);
+
   $testSpeed.addEventListener('input', (event) => {
     const speed = event.target.value;
     const time = Date.now();
 
     $testSpeedValue.innerText = speed;
+    measure.addRecord(speed, time);
   });
 }
