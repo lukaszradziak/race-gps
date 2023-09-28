@@ -1,6 +1,8 @@
 export class Measure {
+  zeroSpeed = 1;
   config = [];
   records = [];
+  lastResult = {};
   onNewResult = () => {};
 
   constructor (onNewResult = () => {}) {
@@ -27,6 +29,10 @@ export class Measure {
     };
 
     for (const configRow of this.config) {
+      if (configRow.start === 0 && speed <= configRow.start + 1) {
+        configRow.ready = true;
+      }
+
       if (speed <= configRow.start) {
         configRow.ready = true;
       }
@@ -49,6 +55,7 @@ export class Measure {
         this.onNewResult(
           this.parseResult(configRow)
         );
+        this.lastResult = configRow;
       } else if (configRow.started && speed > configRow.start && speed < configRow.end) {
         configRow.records.push(record);
       }
@@ -58,16 +65,15 @@ export class Measure {
   }
 
   parseResult (configRow) {
-    const records = [...configRow.previousRecords, ...configRow.records];
+    configRow.allRecords = [...configRow.previousRecords, ...configRow.records];
     const speedTime = {};
 
     for (let i = configRow.start; i <= configRow.end; i += 10) {
-      speedTime[i] = this.findSpeed(i, records);
-      console.log('> interpolateResult', i, speedTime[i]);
-      console.log('---');
+      speedTime[i] = this.findSpeed(i === 0 ? this.zeroSpeed : i, configRow.allRecords);
     }
 
-    configRow.measureTime = ((speedTime[configRow.end] - speedTime[configRow.start]) / 100).toFixed(2);
+    configRow.measureTime = (speedTime[configRow.end] - speedTime[configRow.start]) / 100;
+    configRow.speedTime = speedTime;
 
     return configRow;
   }
@@ -84,7 +90,6 @@ export class Measure {
       }
 
       if (actualRecord.speed > speed && previousRecord.speed <= speed) {
-        console.log('> foundSpeed: ', previousRecord.speed, ' - ', actualRecord.speed);
         interpolateResult = actualRecord.time -
           ((actualRecord.time - previousRecord.time) *
             (actualRecord.speed - speed) /
@@ -93,5 +98,9 @@ export class Measure {
     }
 
     return interpolateResult;
+  }
+
+  getLastResult () {
+    return this.lastResult;
   }
 }

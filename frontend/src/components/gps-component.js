@@ -50,7 +50,9 @@ export function GpsComponent (element) {
 
   const measure = new Measure(
     (result) => {
-      $testSpeedResult.innerHTML = `<li>${result.start}-${result.end}: ${result.measureTime}s</li>` + $testSpeedResult.innerHTML;
+      $testSpeedResult.innerHTML = `
+        <li>${result.start}-${result.end}: ${result.measureTime.toFixed(2)}s</li>
+      ` + $testSpeedResult.innerHTML;
       console.log(result);
     }
   );
