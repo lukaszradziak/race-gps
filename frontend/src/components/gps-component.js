@@ -13,10 +13,28 @@ export function GpsComponent (element) {
   const $testSpeedValue = element.querySelector('.test-speed-value');
   const $measureResult = element.querySelector('.measure-result');
   let csv = [];
+  const measure = new Measure(
+    (result) => {
+      $measureResult.innerHTML = `
+        <div class="measure-row">
+          <span class="measure-speed">
+            ${result.start} - ${result.end}
+          </span>
+          <span class="measure-time">${result.measureTime.toFixed(2)}s</span>
+        </div>
+      ` + $measureResult.innerHTML;
+      console.log(result);
+    }
+  );
+  measure.addConfig(0, 60);
+  measure.addConfig(0, 100);
+  measure.addConfig(100, 150);
+  measure.addConfig(100, 200);
 
   const onData = (event) => {
     const { time, satellites, alt, speed } = parseGpsData(event.target.value);
 
+    measure.addRecord(speed, time);
     csv.push([time, satellites, alt, speed]);
     $csv.innerText = `CSV (${csv.length})`;
 
@@ -47,24 +65,6 @@ export function GpsComponent (element) {
       `race-gps-${Date.now()}.csv`
     );
   });
-
-  const measure = new Measure(
-    (result) => {
-      $measureResult.innerHTML = `
-        <div class="measure-row">
-          <span class="measure-speed">
-            ${result.start} - ${result.end}
-          </span>
-          <span class="measure-time">${result.measureTime.toFixed(2)}s</span>
-        </div>
-      ` + $measureResult.innerHTML;
-      console.log(result);
-    }
-  );
-  measure.addConfig(0, 60);
-  measure.addConfig(0, 100);
-  measure.addConfig(100, 150);
-  measure.addConfig(100, 200);
 
   $testSpeed.addEventListener('input', (event) => {
     const speed = event.target.value;
