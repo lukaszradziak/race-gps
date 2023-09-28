@@ -16,7 +16,6 @@ export class Measure {
       ready: false,
       started: false,
       records: [],
-      previousRecords: [],
       startIndex: 0
     });
   }
@@ -43,19 +42,17 @@ export class Measure {
 
       if (!configRow.started && configRow.ready && speed > configRow.start + 1) {
         configRow.started = true;
-        configRow.records = [];
-        configRow.records.push(record);
-        configRow.previousRecords = this.records.slice(
+        configRow.records = this.records.slice(
           this.records.length - 5,
           this.records.length
         );
+        configRow.records.push(record);
       } else if (configRow.started && speed > configRow.end) {
         configRow.started = false;
         configRow.records.push(record);
-        this.onNewResult(
-          this.parseResult(configRow)
-        );
-        this.lastResult = configRow;
+        const result = this.parseResult({ ...configRow });
+        this.onNewResult(result);
+        this.lastResult = result;
       } else if (configRow.started && speed > configRow.start && speed < configRow.end) {
         configRow.records.push(record);
       }
@@ -65,11 +62,10 @@ export class Measure {
   }
 
   parseResult (configRow) {
-    configRow.allRecords = [...configRow.previousRecords, ...configRow.records];
     const speedTime = {};
 
     for (let i = configRow.start; i <= configRow.end; i += 10) {
-      speedTime[i] = this.findSpeed(i === 0 ? this.zeroSpeed : i, configRow.allRecords);
+      speedTime[i] = this.findSpeed(i === 0 ? this.zeroSpeed : i, configRow.records);
     }
 
     configRow.measureTime = (speedTime[configRow.end] - speedTime[configRow.start]) / 100;
