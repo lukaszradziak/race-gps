@@ -1,5 +1,5 @@
 import { onStartButtonClick, onStopButtonClick } from '../utils/bluetooth.js';
-import { downloadCSV } from '../utils/utils.js';
+import { downloadFile } from '../utils/utils.js';
 import { parseGpsData } from '../utils/gps.js';
 import { Measure } from '../classes/measure.js';
 
@@ -15,15 +15,30 @@ export function GpsComponent (element) {
   let csv = [];
   const measure = new Measure(
     (result) => {
-      $measureResult.innerHTML = `
-        <div class="measure-row">
+      const $row = document.createElement('div');
+
+      $row.innerHTML = `<div class="measure-row">
           <span class="measure-speed">
             ${result.start} - ${result.end}
           </span>
-          <span class="measure-time">${result.measureTime.toFixed(2)}s</span>
-        </div>
-      ` + $measureResult.innerHTML;
-      console.log(result);
+          <span class="measure-time">
+            ${result.measureTime.toFixed(2)}s
+            <a href="#" class="download-data">[D]</a>
+          </span>
+        </div>`;
+
+      $row
+        .querySelector('a.download-data')
+        .addEventListener('click', (event) => {
+          event.preventDefault();
+          downloadFile(
+            JSON.stringify(result, null, 2),
+            `race-gps-${result.start}-${result.end}-${Date.now()}.json`
+          );
+          console.log(result);
+        });
+
+      $measureResult.prepend($row);
     }
   );
   measure.addConfig(0, 60);
@@ -60,9 +75,9 @@ export function GpsComponent (element) {
   });
 
   $csv.addEventListener('click', () => {
-    downloadCSV(
+    downloadFile(
       'time,satellites,alt,speed\n' + csv.map(line => line.join(',')).join('\n'),
-      `race-gps-${Date.now()}.csv`
+      `race-gps-raw-data-${Date.now()}.csv`
     );
   });
 

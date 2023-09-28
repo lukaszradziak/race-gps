@@ -93,7 +93,11 @@ h1 {
 }
 
 .measure-time {
-  text-align: right;
+  display: flex;
+}
+
+.measure-time a {
+  margin-left: 5px;
 }
 
 input.test-speed {
