@@ -56,7 +56,7 @@ export function GpsComponent (element) {
 
     $data.innerHTML = [
       'Satellites:', satellites, '<br>',
-      'Speed:', speed, '<br>',
+      'Speed:', speed.toFixed(4), '<br>',
       'Alt:', alt, '<br>',
       String(time).match(/.{1,2}/g).join(' ')
     ].join(' ');
