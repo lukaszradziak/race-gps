@@ -11,7 +11,7 @@ export function GpsComponent (element) {
   const $log = element.querySelector('.log');
   const $testSpeed = element.querySelector('.test-speed');
   const $testSpeedValue = element.querySelector('.test-speed-value');
-  const $testSpeedResult = element.querySelector('.test-speed-result');
+  const $measureResult = element.querySelector('.measure-result');
   let csv = [];
 
   const onData = (event) => {
@@ -50,9 +50,14 @@ export function GpsComponent (element) {
 
   const measure = new Measure(
     (result) => {
-      $testSpeedResult.innerHTML = `
-        <li>${result.start}-${result.end}: ${result.measureTime.toFixed(2)}s</li>
-      ` + $testSpeedResult.innerHTML;
+      $measureResult.innerHTML = `
+        <div class="measure-row">
+          <span class="measure-speed">
+            ${result.start} - ${result.end}
+          </span>
+          <span class="measure-time">${result.measureTime.toFixed(2)}s</span>
+        </div>
+      ` + $measureResult.innerHTML;
       console.log(result);
     }
   );

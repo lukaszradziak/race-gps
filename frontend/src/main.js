@@ -12,9 +12,11 @@ document.querySelector('#app').innerHTML = `
         <button class="disconnect" type="button">Disconnect</button>
         <button class="csv" type="button">CSV</button>
         <div class="log"></div>
-        <div class="test-speed-value"></div>
-        <input type="range" class="test-speed" min="-10" max="300" step="0.01" value="30" />
-        <div class="test-speed-result"></div>
+        <div style="display: ${window.location.hash === '#test' ? 'block' : 'none'}">
+            <div class="test-speed-value"></div>
+            <input type="range" class="test-speed" min="-10" max="300" step="0.01" value="30" />
+        </div>
+        <div class="measure-result"></div>
       </div>
     </div>
   </div>

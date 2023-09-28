@@ -73,6 +73,29 @@ h1 {
   margin-top: 1em;
 }
 
+.measure-result {
+  display: flex;
+  flex-direction: column;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.measure-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 0.5em;
+}
+
+.measure-speed {
+  text-align: left;
+}
+
+.measure-time {
+  text-align: right;
+}
+
 input.test-speed {
   width: 100%;
 }
