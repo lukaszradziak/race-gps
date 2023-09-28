@@ -50,9 +50,8 @@ export class Measure {
       } else if (configRow.started && speed > configRow.end) {
         configRow.started = false;
         configRow.records.push(record);
-        const result = this.parseResult({ ...configRow });
-        this.onNewResult(result);
-        this.lastResult = result;
+        this.lastResult = this.parseResult({ ...configRow });
+        this.onNewResult(this.lastResult);
       } else if (configRow.started && speed > configRow.start && speed < configRow.end) {
         configRow.records.push(record);
       }
