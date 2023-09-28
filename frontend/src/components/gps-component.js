@@ -33,7 +33,8 @@ export function GpsComponent (element) {
           event.preventDefault();
           downloadFile(
             JSON.stringify(result, null, 2),
-            `race-gps-${result.start}-${result.end}-${Date.now()}.json`
+            `race-gps-${result.start}-${result.end}-${Date.now()}.json`,
+            'text/plain'
           );
           console.log(result);
         });
