@@ -19,6 +19,27 @@ test('0-60', () => {
   expect(speedTime['60']).toBe(65);
 });
 
+test('0-60_2', () => {
+  const measure = new Measure();
+  measure.addConfig(0, 60);
+
+  measure.addRecord(0.1, 100);
+  measure.addRecord(0.26, 110);
+  measure.addRecord(0.35, 120);
+  measure.addRecord(0.50, 130);
+  measure.addRecord(1.50, 140);
+  measure.addRecord(1.20, 150);
+  measure.addRecord(0.80, 160);
+  measure.addRecord(1.20, 170);
+  measure.addRecord(10, 180);
+  measure.addRecord(59.50, 190);
+  measure.addRecord(60.50, 200);
+
+  const speedTime = measure.getLastResult().speedTime;
+  expect(speedTime['0']).toBe(165);
+  expect(speedTime['60']).toBe(195);
+});
+
 test('100-150', () => {
   const measure = new Measure();
   measure.addConfig(100, 150);
@@ -31,6 +52,21 @@ test('100-150', () => {
   const speedTime = measure.getLastResult().speedTime;
   expect(speedTime['100']).toBe(45);
   expect(speedTime['150']).toBe(65);
+});
+
+test('100-150_2', () => {
+  const measure = new Measure();
+  measure.addConfig(100, 150);
+
+  measure.addRecord(99.1, 100);
+  measure.addRecord(100.9, 110);
+  measure.addRecord(101, 120);
+  measure.addRecord(149, 130);
+  measure.addRecord(151, 140);
+
+  const speedTime = measure.getLastResult().speedTime;
+  expect(speedTime['100']).toBe(105);
+  expect(speedTime['150']).toBe(135);
 });
 
 test('0-100-full', () => {

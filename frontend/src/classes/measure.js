@@ -40,7 +40,7 @@ export class Measure {
         configRow.ready = false;
       }
 
-      if (!configRow.started && configRow.ready && speed > configRow.start + 1) {
+      if (!configRow.started && configRow.ready && speed > configRow.start) {
         configRow.started = true;
         configRow.records = this.records.slice(
           this.records.length - 5,
@@ -76,6 +76,7 @@ export class Measure {
 
   findSpeed (speed, records) {
     let interpolateResult = 0;
+    let foundRecord;
 
     for (const index in records) {
       const previousRecord = records[parseInt(index) - 1];
@@ -90,8 +91,11 @@ export class Measure {
           ((actualRecord.time - previousRecord.time) *
             (actualRecord.speed - speed) /
             (actualRecord.speed - previousRecord.speed));
+        foundRecord = actualRecord;
       }
     }
+
+    foundRecord.foundedSpeed = speed;
 
     return interpolateResult;
   }
