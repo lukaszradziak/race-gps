@@ -95,7 +95,8 @@ export class Measure {
       }
     }
 
-    foundRecord.foundedSpeed = speed;
+    foundRecord.foundSpeed = speed;
+    foundRecord.foundTime = interpolateResult;
 
     return interpolateResult;
   }
