@@ -12,6 +12,7 @@ export function GpsComponent (element) {
   const $testSpeed = element.querySelector('.test-speed');
   const $testSpeedValue = element.querySelector('.test-speed-value');
   const $measureResult = element.querySelector('.measure-result');
+  const $realTime = element.querySelector('.real-time');
   let csv = [];
   const measure = new Measure(
     (result) => {
@@ -60,6 +61,7 @@ export function GpsComponent (element) {
       'Alt:', alt, '<br>',
       String(time).match(/.{1,2}/g).join(' ')
     ].join(' ');
+    $realTime.innerText = new Date().toLocaleTimeString() + ' ' + new Date().getMilliseconds();
   };
 
   const log = (data) => {

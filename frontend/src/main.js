@@ -8,6 +8,7 @@ document.querySelector('#app').innerHTML = `
     <div id="gps-component">
       <div class="card">
         <div class="data"></div>
+        <div class="real-time"></div>
         <button class="connect" type="button">Connect</button>
         <button class="disconnect" type="button">Disconnect</button>
         <button class="csv" type="button">CSV</button>
