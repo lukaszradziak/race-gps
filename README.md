@@ -4,6 +4,8 @@
 
 https://race-gps.netlify.app
 
+<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/a931eb5f-34a2-4251-b80a-c3a56677c4cb">
+
 ## Requirements
 
 * ESP32
