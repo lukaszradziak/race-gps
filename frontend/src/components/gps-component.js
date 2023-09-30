@@ -2,6 +2,7 @@ import { onStartButtonClick, onStopButtonClick } from '../utils/bluetooth.js';
 import { downloadFile } from '../utils/utils.js';
 import { parseGpsData } from '../utils/gps.js';
 import { Measure } from '../classes/measure.js';
+import Highcharts from 'highcharts';
 
 export function GpsComponent (element) {
   const $connectButton = element.querySelector('button.connect');
@@ -47,7 +48,13 @@ export function GpsComponent (element) {
         $modalBg.style.visibility = 'visible';
         $modal.innerHTML = `<h2>${result.start} - ${result.end}: ${result.measureTime.toFixed(2)}s</h2>`;
 
-        let resultTimes = '';
+        const $chart = document.createElement('div');
+        $chart.setAttribute('id', 'chart');
+        $modal.appendChild($chart);
+
+        const $speedTimes = document.createElement('div');
+        $speedTimes.classList.add('details-speed-list');
+        $modal.appendChild($speedTimes);
         const speedList = Object.keys(result.speedTime);
 
         for (const index in speedList) {
@@ -56,11 +63,38 @@ export function GpsComponent (element) {
 
           if (start >= 0 && end >= 0) {
             const time = result.speedTime[end] - result.speedTime[start];
-            resultTimes += `<li>${start} - ${end}: ${time.toFixed(2)}s </li>`;
+            $speedTimes.innerHTML += `<li>${start} - ${end}: ${time.toFixed(2)}s </li>`;
           }
         }
 
-        $modal.innerHTML += resultTimes;
+        Highcharts.chart('chart', {
+          title: {
+            text: null
+          },
+          yAxis: {
+            title: false
+          },
+          xAxis: {
+            title: false,
+            labels: {
+              enabled: false
+            }
+          },
+          series: [
+            {
+              showInLegend: false,
+              name: 'Speed',
+              data: result.records.map(record => parseFloat(record.speed))
+            }
+          ],
+          plotOptions: {
+            series: {
+              marker: {
+                enabled: false
+              }
+            }
+          }
+        });
       });
 
       $measureResult.prepend($row);
@@ -107,7 +141,11 @@ export function GpsComponent (element) {
     );
   });
 
-  $modalBg.addEventListener('click', () => {
+  $modalBg.addEventListener('click', (event) => {
+    if (event.target !== $modalBg) {
+      return;
+    }
+
     $modalBg.style.visibility = 'hidden';
   });
 
