@@ -19,6 +19,9 @@ document.querySelector('#app').innerHTML = `
         </div>
         <div class="measure-result"></div>
       </div>
+      <div class="modal-bg">
+        <div class="modal"></div>
+      </div>
     </div>
   </div>
 `;
