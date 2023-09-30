@@ -67,6 +67,15 @@ export function GpsComponent (element) {
           }
         }
 
+        const firstFoundSpeedIndex = result.records.findIndex(record => record.foundSpeed >= 0);
+
+        const speedValues = result
+          .records
+          .filter((record, recordIndex) => {
+            return recordIndex >= firstFoundSpeedIndex;
+          })
+          .map(record => parseFloat(record.speed));
+
         Highcharts.chart('chart', {
           title: {
             text: null
@@ -84,7 +93,7 @@ export function GpsComponent (element) {
             {
               showInLegend: false,
               name: 'Speed',
-              data: result.records.map(record => parseFloat(record.speed))
+              data: speedValues
             }
           ],
           plotOptions: {
