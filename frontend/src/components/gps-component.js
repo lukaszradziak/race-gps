@@ -63,7 +63,7 @@ export function GpsComponent (element) {
 
           if (start >= 0 && end >= 0) {
             const time = result.speedTime[end] - result.speedTime[start];
-            $speedTimes.innerHTML += `<li>${start} - ${end}: ${time.toFixed(2)}s </li>`;
+            $speedTimes.innerHTML += `<li>${start} - ${end}: ${(time / 100).toFixed(2)}s </li>`;
           }
         }
 
