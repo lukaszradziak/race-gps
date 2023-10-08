@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { useMeasure } from "../hooks/useMeasure.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
@@ -52,8 +52,8 @@ export function GpsComponent() {
     );
   };
 
-  const handleTestSpeed = ({ target }: { target: HTMLInputElement }) => {
-    addRecord(parseFloat(target.value) || 0, Math.floor(Date.now() / 10));
+  const handleTestSpeed = (event: ChangeEvent<HTMLInputElement>) => {
+    addRecord(parseFloat(event.target.value) || 0, Math.floor(Date.now() / 10));
   };
 
   // TODO: modal with graph
@@ -84,7 +84,9 @@ export function GpsComponent() {
         <button className="csv" onClick={handleDownloadCsv}>
           Download CSV ({csvData.length})
         </button>
-        <div className="log">{log}</div>
+        <div className="log" data-testid="log">
+          {log}
+        </div>
         {import.meta.env.DEV ? (
           <input
             type="range"
