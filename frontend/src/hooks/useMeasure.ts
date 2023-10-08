@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Measure, MeasureResult } from "../classes/measure.ts";
 const measure = new Measure();
 
-export function useMeasure({
-  onResult,
-}: {
+interface useMeasureParam {
+  speedConfig: [number, number][];
   onResult: (data: MeasureResult) => void;
-}) {
+}
+
+export function useMeasure({ speedConfig, onResult }: useMeasureParam) {
   const [speed, setSpeed] = useState(0);
   const [time, setTime] = useState(0);
 
@@ -17,8 +18,9 @@ export function useMeasure({
   };
 
   useEffect(() => {
-    measure.addConfig(0, 60);
-    measure.addConfig(0, 100);
+    speedConfig.forEach((config) => {
+      measure.addConfig(config[0], config[1]);
+    });
     measure.handleNewResult(onResult);
 
     return () => {

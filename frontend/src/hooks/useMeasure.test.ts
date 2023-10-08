@@ -12,6 +12,7 @@ describe("useMeasure", () => {
 
     const { result, unmount } = renderHook(() =>
       useMeasure({
+        speedConfig: [[10, 50]],
         onResult: (data) => {
           measureTimeResult = data.measureTime;
         },
@@ -30,7 +31,7 @@ describe("useMeasure", () => {
 
     expect(result.current.speed).toBe(70);
     expect(result.current.time).toBe(260);
-    expect(measureTimeResult).toBe(0.49);
+    expect(measureTimeResult).toBe(0.3);
 
     unmount();
   });
