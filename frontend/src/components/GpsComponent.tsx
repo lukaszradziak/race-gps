@@ -16,6 +16,12 @@ export function GpsComponent() {
   const [csvData, setCsvData] = useState<GpsData[]>([]);
 
   const { speed, time, addRecord } = useMeasure({
+    speedConfig: [
+      [0, 60],
+      [0, 100],
+      [100, 150],
+      [100, 200],
+    ],
     onResult: (data: MeasureResult) => {
       setMeasureResult((previousMeasureResult) => [
         ...previousMeasureResult,
