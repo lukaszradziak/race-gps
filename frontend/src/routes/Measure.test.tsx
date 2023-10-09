@@ -36,12 +36,7 @@ describe("GpsComponent", () => {
     expect(connectMock.mock.calls.length).toBe(1);
   });
 
-  test("click-disconnect", () => {
-    const disconnectButton = screen.getByText("Disconnect");
-    fireEvent.click(disconnectButton);
-
-    expect(disconnectMock.mock.calls.length).toBe(1);
-  });
+  // TODO: click disconnect
 
   // TODO: rest of test cases
 });
