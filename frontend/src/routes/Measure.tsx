@@ -34,7 +34,7 @@ export function Measure() {
     },
   });
 
-  const { connect, disconnect, log } = useBluetooth({
+  const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
       const data: GpsData = parseGpsData(
         (event.target as BluetoothRemoteGATTCharacteristic).value,
@@ -90,6 +90,24 @@ export function Measure() {
               </svg>
               {Math.floor(gpsData.alt / 100)}m
             </span>
+            <span className="flex gap-1" onClick={handleDownloadCsv}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
+                />
+              </svg>
+
+              {csvData.length}
+            </span>
             <span className="flex gap-1">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -121,11 +139,11 @@ export function Measure() {
             <div className="flex-grow border-t border-gray-200"></div>
           </div>
           <div className="flex flex-col w-full">
-            <Button onClick={handleConnect}>Connect</Button>
-            <Button onClick={handleDisconnect}>Disconnect</Button>
-            <Button onClick={handleDownloadCsv}>
-              Download CSV ({csvData.length})
-            </Button>
+            {connected ? (
+              <Button onClick={handleDisconnect}>Disconnect</Button>
+            ) : (
+              <Button onClick={handleConnect}>Connect</Button>
+            )}
           </div>
         </div>
         <Info>{log}</Info>

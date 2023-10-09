@@ -5,6 +5,7 @@ let bluetoothDevice: BluetoothDevice | undefined;
 export function onStartButtonClick(
   callback: (event: Event) => void,
   log: (data: string) => void,
+  connected?: () => void,
 ) {
   const serviceUuid = "65316b7c-b605-45b4-be6d-b02473b0d29a";
   const characteristicUuid = "c8ad396d-8006-488d-beed-3a55c4b5ccae";
@@ -25,6 +26,7 @@ export function onStartButtonClick(
       return device.gatt?.connect();
     })
     .then((server) => {
+      connected && connected();
       log("Getting Service...");
       return server?.getPrimaryService(serviceUuid);
     })
@@ -69,7 +71,7 @@ export function onStopButtonClick(
           bluetoothDevice?.gatt.disconnect();
           log("Disconnected");
         } else {
-          log("> Bluetooth Device is already disconnected");
+          log("Bluetooth Device is already disconnected");
         }
       })
       .catch((error: string) => {
