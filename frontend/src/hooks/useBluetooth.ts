@@ -5,6 +5,7 @@ export interface useBluetoothType {
   connect: () => void;
   disconnect: () => void;
   log: string;
+  connected: boolean;
 }
 
 export interface useBluetoothParam {
@@ -15,6 +16,7 @@ export function useBluetooth({
   handleData,
 }: useBluetoothParam): useBluetoothType {
   const [log, setLog] = useState("Disconnected");
+  const [connected, setConnected] = useState(false);
 
   const handleLog = (data: string) => {
     setLog(data);
@@ -23,17 +25,22 @@ export function useBluetooth({
   useEffect(() => {
     return () => {
       onStopButtonClick(handleData, handleLog);
+      setConnected(false);
     };
     // eslint-disable-next-line
   }, []);
 
   return {
     connect: () => {
-      onStartButtonClick(handleData, handleLog);
+      onStartButtonClick(handleData, handleLog, () => {
+        setConnected(true);
+      });
     },
     disconnect: () => {
       onStopButtonClick(handleData, handleLog);
+      setConnected(false);
     },
     log,
+    connected,
   };
 }
