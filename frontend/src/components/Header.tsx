@@ -14,31 +14,20 @@ export function Header() {
           <div className="flex items-center">
             <a href="#">
               <span className="sr-only">Race GPS</span>
-              <span className="text-4xl">📡</span>
+              <span className="text-3xl">📡</span>
             </a>
-            <div className="ml-10 hidden space-x-8 lg:block">
+            <div className="ml-10 space-x-8">
               {navigation.map((link) => (
-                <a
+                <Link
                   key={link.name}
-                  href={link.href}
+                  to={link.href}
                   className="text-base font-medium text-white hover:text-indigo-50"
                 >
                   {link.name}
-                </a>
+                </Link>
               ))}
             </div>
           </div>
-        </div>
-        <div className="flex flex-wrap justify-center gap-x-6 py-4 lg:hidden">
-          {navigation.map((link) => (
-            <Link
-              key={link.name}
-              to={link.href}
-              className="text-base font-medium text-white hover:text-indigo-50"
-            >
-              {link.name}
-            </Link>
-          ))}
         </div>
       </nav>
     </header>
