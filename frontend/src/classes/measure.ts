@@ -74,11 +74,7 @@ export class Measure {
         configRow.records.push(record);
         this.lastResult = this.parseResult(configRow);
         this.onNewResult(this.lastResult);
-      } else if (
-        configRow.started &&
-        speed > configRow.start &&
-        speed < configRow.end
-      ) {
+      } else if (configRow.started && speed <= configRow.end) {
         configRow.records.push(record);
       }
     }
