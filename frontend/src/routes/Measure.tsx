@@ -4,7 +4,10 @@ import { useMeasure } from "../hooks/useMeasure.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { MeasureResult } from "../classes/measure.ts";
 import { downloadFile } from "../utils/utils.ts";
-import { TestSpeedComponent } from "../components/TestSpeedComponent.tsx";
+import { TestSpeed } from "../components/TestSpeed.tsx";
+import { Card } from "../components/Card.tsx";
+import { Button } from "../components/Button.tsx";
+import { Info } from "../components/Info.tsx";
 
 export function Measure() {
   const [measureResult, setMeasureResult] = useState<MeasureResult[]>([]);
@@ -67,45 +70,81 @@ export function Measure() {
 
   return (
     <>
-      <div className="card">
-        <div className="data">
-          <h2>{Math.floor(speed)}</h2>
-          <p>
-            S: {gpsData.satellites} A: {gpsData.alt}
-          </p>
-          <p>
-            {String(time)
-              .match(/.{1,2}/g)
-              ?.join(":")}
-          </p>
+      <Card>
+        <div className="flex flex-col justify-center items-center">
+          <div className="flex justify-between w-full text-sm">
+            <span className="flex gap-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
+                />
+              </svg>
+              {Math.floor(gpsData.alt / 100)}m
+            </span>
+            <span className="flex gap-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"
+                />
+              </svg>
+              {gpsData.satellites}/12
+            </span>
+          </div>
+          <span className="mt-1 text-8xl font-semibold tracking-tight text-gray-900 py-4">
+            {Math.floor(speed)}
+          </span>
+          <div className="relative flex py-5 items-center w-full">
+            <div className="flex-grow border-t border-gray-200"></div>
+            <span className="flex-shrink mx-4 text-gray-400">
+              {String(time)
+                .match(/.{1,2}/g)
+                ?.join(":")}
+            </span>
+            <div className="flex-grow border-t border-gray-200"></div>
+          </div>
+          <div className="flex flex-col w-full">
+            <Button onClick={handleConnect}>Connect</Button>
+            <Button onClick={handleDisconnect}>Disconnect</Button>
+            <Button onClick={handleDownloadCsv}>
+              Download CSV ({csvData.length})
+            </Button>
+          </div>
         </div>
-        <div className="real-time">
-          {new Date().toLocaleTimeString()}:{new Date().getMilliseconds()}
-        </div>
-        <button className="connect" onClick={handleConnect}>
-          Connect
-        </button>
-        <button className="disconnect" onClick={handleDisconnect}>
-          Disconnect
-        </button>
-        <button className="csv" onClick={handleDownloadCsv}>
-          Download CSV ({csvData.length})
-        </button>
-        <div className="log" data-testid="log">
-          {log}
-        </div>
-        {import.meta.env.DEV ? (
-          <TestSpeedComponent value={speed} onChange={handleTestSpeed} />
-        ) : null}
-        {measureResult.reverse().map((measure, index) => (
-          <li key={index}>
-            {measure.start}-{measure.end}: {measure.measureTime.toFixed(2)}s
-          </li>
-        ))}
-      </div>
-      <div className="modal-bg">
-        <div className="modal"></div>
-      </div>
+        <Info>{log}</Info>
+      </Card>
+      {import.meta.env.DEV ? (
+        <Card>
+          <TestSpeed value={speed} onChange={handleTestSpeed} />
+        </Card>
+      ) : null}
+      {measureResult.reverse().map((measure, index) => (
+        <Card key={index}>
+          <div className="flex justify-between">
+            <strong>
+              {measure.start} - {measure.end}
+            </strong>
+            <span>{measure.measureTime.toFixed(2)}s</span>
+          </div>
+        </Card>
+      ))}
     </>
   );
 }

@@ -35,7 +35,7 @@ export function onStartButtonClick(
     .then((characteristic) => {
       myCharacteristic = characteristic;
       return myCharacteristic?.startNotifications().then(() => {
-        log("> Notifications started");
+        log("Notifications started");
         myCharacteristic?.addEventListener(
           "characteristicvaluechanged",
           callback,
@@ -55,7 +55,7 @@ export function onStopButtonClick(
     myCharacteristic
       .stopNotifications()
       .then(() => {
-        log("> Notifications stopped");
+        log("Notifications stopped");
         myCharacteristic?.removeEventListener(
           "characteristicvaluechanged",
           callback,
