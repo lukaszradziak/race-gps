@@ -1,3 +1,5 @@
+import { Card } from "../components/Card.tsx";
+
 export function Settings() {
-  return <div>Settings</div>;
+  return <Card title="Settings">...</Card>;
 }
