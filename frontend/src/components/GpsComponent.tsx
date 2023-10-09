@@ -4,6 +4,7 @@ import { useMeasure } from "../hooks/useMeasure.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { MeasureResult } from "../classes/measure.ts";
 import { downloadFile } from "../utils/utils.ts";
+import { TestSpeedComponent } from "./TestSpeedComponent.tsx";
 
 export function GpsComponent() {
   const [measureResult, setMeasureResult] = useState<MeasureResult[]>([]);
@@ -94,15 +95,7 @@ export function GpsComponent() {
           {log}
         </div>
         {import.meta.env.DEV ? (
-          <input
-            type="range"
-            className="test-speed"
-            min="-10"
-            max="300"
-            step="0.01"
-            value={speed}
-            onChange={handleTestSpeed}
-          />
+          <TestSpeedComponent value={speed} onChange={handleTestSpeed} />
         ) : null}
         {measureResult.reverse().map((measure, index) => (
           <li key={index}>
