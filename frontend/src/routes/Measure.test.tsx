@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { GpsComponent } from "./GpsComponent.tsx";
+import { Measure } from "./Measure.tsx";
 
 const connectMock = vi.fn();
 const disconnectMock = vi.fn();
@@ -16,7 +16,7 @@ vi.mock("../hooks/useBluetooth.ts", () => ({
 
 describe("GpsComponent", () => {
   beforeEach(() => {
-    render(<GpsComponent />);
+    render(<Measure />);
   });
 
   afterEach(() => {

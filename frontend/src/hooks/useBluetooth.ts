@@ -1,5 +1,5 @@
 import { onStartButtonClick, onStopButtonClick } from "../utils/bluetooth.ts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface useBluetoothType {
   connect: () => void;
@@ -19,6 +19,13 @@ export function useBluetooth({
   const handleLog = (data: string) => {
     setLog(data);
   };
+
+  useEffect(() => {
+    return () => {
+      onStopButtonClick(handleData, handleLog);
+    };
+    // eslint-disable-next-line
+  }, []);
 
   return {
     connect: () => {

@@ -4,9 +4,9 @@ import { useMeasure } from "../hooks/useMeasure.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { MeasureResult } from "../classes/measure.ts";
 import { downloadFile } from "../utils/utils.ts";
-import { TestSpeedComponent } from "./TestSpeedComponent.tsx";
+import { TestSpeedComponent } from "../components/TestSpeedComponent.tsx";
 
-export function GpsComponent() {
+export function Measure() {
   const [measureResult, setMeasureResult] = useState<MeasureResult[]>([]);
   const [gpsData, setGpsData] = useState<GpsData>({
     satellites: 0,
