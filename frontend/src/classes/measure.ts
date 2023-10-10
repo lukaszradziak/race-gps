@@ -23,6 +23,7 @@ export interface MeasureResult {
   measureTime: number;
   startTime: number;
   speedTime: Map<number, number>;
+  records: MeasureRecord[];
 }
 
 export class Measure {
@@ -102,6 +103,7 @@ export class Measure {
         100,
       startTime: speedTime.get(configRow.start) || 0,
       speedTime,
+      records: configRow.records,
     };
   }
 
