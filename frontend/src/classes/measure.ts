@@ -66,18 +66,17 @@ export class Measure {
 
       if (!configRow.started && configRow.ready && speed > configRow.start) {
         configRow.started = true;
-        configRow.records = this.records.slice(
-          this.records.length - 5,
-          this.records.length,
-        );
-        configRow.records.push(record);
+        configRow.records = [
+          ...this.records.slice(this.records.length - 5, this.records.length),
+        ];
+        configRow.records.push({ ...record });
       } else if (configRow.started && speed > configRow.end) {
         configRow.started = false;
-        configRow.records.push(record);
+        configRow.records.push({ ...record });
         this.lastResult = this.parseResult(configRow);
         this.onNewResult(this.lastResult);
       } else if (configRow.started && speed <= configRow.end) {
-        configRow.records.push(record);
+        configRow.records.push({ ...record });
       }
     }
 
