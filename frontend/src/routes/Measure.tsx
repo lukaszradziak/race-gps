@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { useMeasure } from "../hooks/useMeasure.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
@@ -10,7 +10,6 @@ import { Button } from "../components/Button.tsx";
 import { Info } from "../components/Info.tsx";
 import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { Modal } from "../components/Modal.tsx";
-import { actualTime } from "../utils/number.ts";
 import { makeChart } from "../utils/chart.tsx";
 
 export function Measure() {
@@ -64,11 +63,9 @@ export function Measure() {
     );
   };
 
-  const handleTestSpeed = (event: ChangeEvent<HTMLInputElement>) => {
-    addRecord(parseFloat(event.target.value) || 0, actualTime());
+  const handleTestSpeed = (speed: number, time: number) => {
+    addRecord(speed, time);
   };
-
-  // TODO: add graph to modal
 
   return (
     <>
@@ -163,11 +160,19 @@ export function Measure() {
           onClick={() => {
             setModalOpen(true);
             setModalMeasure(measure);
+
+            const firstFoundSpeedIndex = measure.records.findIndex(
+              (record) =>
+                record.foundSpeed !== undefined && record.foundSpeed >= 0,
+            );
+
             makeChart("chart", [
               {
                 showInLegend: false,
                 name: "Speed",
-                data: measure.records.map((record) => record.speed),
+                data: measure.records
+                  .filter((_record, index) => index > firstFoundSpeedIndex)
+                  .map((record) => record.speed),
               },
             ]);
           }}
