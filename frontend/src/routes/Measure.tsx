@@ -8,8 +8,10 @@ import { TestSpeed } from "../components/TestSpeed.tsx";
 import { Card } from "../components/Card.tsx";
 import { Button } from "../components/Button.tsx";
 import { Info } from "../components/Info.tsx";
+import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 
 export function Measure() {
+  const [settings] = useSettingReducer();
   const [measureResult, setMeasureResult] = useState<MeasureResult[]>([]);
   const [gpsData, setGpsData] = useState<GpsData>({
     satellites: 0,
@@ -20,12 +22,7 @@ export function Measure() {
   const [csvData, setCsvData] = useState<GpsData[]>([]);
 
   const { speed, time, addRecord } = useMeasure({
-    speedConfig: [
-      [0, 60],
-      [0, 100],
-      [100, 150],
-      [100, 200],
-    ],
+    speedConfig: settings.speed.map((speed) => [speed.start, speed.end]),
     onResult: (data: MeasureResult) => {
       setMeasureResult((previousMeasureResult) => [
         ...previousMeasureResult,
@@ -71,7 +68,7 @@ export function Measure() {
   return (
     <>
       <Card>
-        <div className="flex flex-col justify-center items-center">
+        <div className="flex flex-col justify-center items-center mb-2">
           <div className="flex justify-between w-full text-sm">
             <span className="flex gap-1">
               <svg
@@ -140,15 +137,19 @@ export function Measure() {
           </div>
           <div className="flex flex-col w-full">
             {connected ? (
-              <Button onClick={handleDisconnect}>Disconnect</Button>
+              <Button onClick={handleDisconnect} size="lg">
+                Disconnect
+              </Button>
             ) : (
-              <Button onClick={handleConnect}>Connect</Button>
+              <Button onClick={handleConnect} size="lg">
+                Connect
+              </Button>
             )}
           </div>
         </div>
-        <Info>{log}</Info>
+        {log ? <Info>{log}</Info> : null}
       </Card>
-      {import.meta.env.DEV ? (
+      {settings.testMode ? (
         <Card>
           <TestSpeed value={speed} onChange={handleTestSpeed} />
         </Card>
