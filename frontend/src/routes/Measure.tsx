@@ -4,11 +4,13 @@ import { useMeasure } from "../hooks/useMeasure.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { MeasureResult } from "../classes/measure.ts";
 import { downloadFile } from "../utils/utils.ts";
-import { TestSpeed } from "../components/TestSpeed.tsx";
+import { TestMode } from "../components/TestMode.tsx";
 import { Card } from "../components/Card.tsx";
 import { Button } from "../components/Button.tsx";
 import { Info } from "../components/Info.tsx";
 import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
+import { Modal } from "../components/Modal.tsx";
+import { actualTime } from "../utils/number.ts";
 
 export function Measure() {
   const [settings] = useSettingReducer();
@@ -20,6 +22,8 @@ export function Measure() {
     speed: 0,
   });
   const [csvData, setCsvData] = useState<GpsData[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMeasure, setModalMeasure] = useState<MeasureResult>();
 
   const { speed, time, addRecord } = useMeasure({
     speedConfig: settings.speed.map((speed) => [speed.start, speed.end]),
@@ -60,10 +64,10 @@ export function Measure() {
   };
 
   const handleTestSpeed = (event: ChangeEvent<HTMLInputElement>) => {
-    addRecord(parseFloat(event.target.value) || 0, Math.floor(Date.now() / 10));
+    addRecord(parseFloat(event.target.value) || 0, actualTime());
   };
 
-  // TODO: modal with graph
+  // TODO: add graph to modal
 
   return (
     <>
@@ -150,12 +154,18 @@ export function Measure() {
         {log ? <Info>{log}</Info> : null}
       </Card>
       {settings.testMode ? (
-        <Card>
-          <TestSpeed value={speed} onChange={handleTestSpeed} />
-        </Card>
+        <TestMode value={speed} onChange={handleTestSpeed} />
       ) : null}
       {measureResult.reverse().map((measure, index) => (
-        <Card key={index}>
+        <Card
+          key={index}
+          onClick={() => {
+            setModalOpen(true);
+            setModalMeasure(measure);
+            console.log(measure);
+          }}
+          className="cursor-pointer hover:bg-gray-50"
+        >
           <div className="flex justify-between">
             <strong>
               {measure.start} - {measure.end}
@@ -164,6 +174,18 @@ export function Measure() {
           </div>
         </Card>
       ))}
+      <Modal open={modalOpen} setOpen={setModalOpen}>
+        {modalMeasure ? (
+          <>
+            {[...modalMeasure.speedTime].map((speedTime, index) => (
+              <div key={index}>
+                {modalMeasure.start} - {speedTime[0]}:{" "}
+                {((speedTime[1] - modalMeasure.startTime) / 100).toFixed(2)}s
+              </div>
+            ))}
+          </>
+        ) : null}
+      </Modal>
     </>
   );
 }

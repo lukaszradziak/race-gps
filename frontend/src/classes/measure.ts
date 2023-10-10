@@ -21,6 +21,7 @@ export interface MeasureResult {
   start: number;
   end: number;
   measureTime: number;
+  startTime: number;
   speedTime: Map<number, number>;
 }
 
@@ -99,6 +100,7 @@ export class Measure {
         ((speedTime.get(configRow.end) || 0) -
           (speedTime.get(configRow.start) || 0)) /
         100,
+      startTime: speedTime.get(configRow.start) || 0,
       speedTime,
     };
   }

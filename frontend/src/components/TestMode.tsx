@@ -1,6 +1,7 @@
 import { ChangeEvent, useState } from "react";
+import { Card } from "./Card.tsx";
 
-export function TestSpeed({
+export function TestMode({
   value,
   onChange,
 }: {
@@ -10,10 +11,9 @@ export function TestSpeed({
   const [startTime, setStartTime] = useState(0);
 
   return (
-    <>
+    <Card title="Test mode">
       <div className="text-center">
-        <span>Test speed: </span>
-        <strong>{value.toFixed(2)}</strong>
+        {value.toFixed(2)}
         {startTime > 0 ? (
           <span>({((Date.now() - startTime) / 1000).toFixed(2)}s)</span>
         ) : null}
@@ -28,6 +28,6 @@ export function TestSpeed({
         onChange={onChange}
         onMouseDown={() => setStartTime(Date.now())}
       />
-    </>
+    </Card>
   );
 }
