@@ -10,7 +10,7 @@ import { Button } from "../components/Button.tsx";
 import { Info } from "../components/Info.tsx";
 import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { Modal } from "../components/Modal.tsx";
-import { makeChart } from "../utils/chart.tsx";
+import { makeChart } from "../utils/chart.ts";
 
 export function Measure() {
   const [settings] = useSettingReducer();
