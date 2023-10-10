@@ -15,7 +15,7 @@ export interface useBluetoothParam {
 export function useBluetooth({
   handleData,
 }: useBluetoothParam): useBluetoothType {
-  const [log, setLog] = useState("Disconnected");
+  const [log, setLog] = useState("");
   const [connected, setConnected] = useState(false);
 
   const handleLog = (data: string) => {

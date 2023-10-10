@@ -37,7 +37,7 @@ export function onStartButtonClick(
     .then((characteristic) => {
       myCharacteristic = characteristic;
       return myCharacteristic?.startNotifications().then(() => {
-        log("Notifications started");
+        log("");
         myCharacteristic?.addEventListener(
           "characteristicvaluechanged",
           callback,
