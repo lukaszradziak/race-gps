@@ -11,6 +11,7 @@ import { Info } from "../components/Info.tsx";
 import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { Modal } from "../components/Modal.tsx";
 import { actualTime } from "../utils/number.ts";
+import { makeChart } from "../utils/chart.tsx";
 
 export function Measure() {
   const [settings] = useSettingReducer();
@@ -162,7 +163,13 @@ export function Measure() {
           onClick={() => {
             setModalOpen(true);
             setModalMeasure(measure);
-            console.log(measure);
+            makeChart("chart", [
+              {
+                showInLegend: false,
+                name: "Speed",
+                data: measure.records.map((record) => record.speed),
+              },
+            ]);
           }}
           className="cursor-pointer hover:bg-gray-50"
         >
@@ -177,12 +184,24 @@ export function Measure() {
       <Modal open={modalOpen} setOpen={setModalOpen}>
         {modalMeasure ? (
           <>
-            {[...modalMeasure.speedTime].map((speedTime, index) => (
-              <div key={index}>
-                {modalMeasure.start} - {speedTime[0]}:{" "}
-                {((speedTime[1] - modalMeasure.startTime) / 100).toFixed(2)}s
-              </div>
-            ))}
+            <div id="chart" className="mb-4"></div>
+            <div className="grid grid-cols-2 gap-x-6">
+              {[...modalMeasure.speedTime]
+                .filter((speedTime) => speedTime[0] > modalMeasure.start)
+                .map((speedTime, index) => (
+                  <div key={index} className="flex justify-between">
+                    <span>
+                      {modalMeasure.start} - {speedTime[0]}
+                    </span>
+                    <span>
+                      {((speedTime[1] - modalMeasure.startTime) / 100).toFixed(
+                        2,
+                      )}
+                      s
+                    </span>
+                  </div>
+                ))}
+            </div>
           </>
         ) : null}
       </Modal>
