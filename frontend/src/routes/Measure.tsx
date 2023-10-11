@@ -154,7 +154,7 @@ export function Measure() {
       {settings.testMode ? (
         <TestMode value={speed} onChange={handleTestSpeed} />
       ) : null}
-      {measureResult.reverse().map((measure, index) => (
+      {[...measureResult].reverse().map((measure, index) => (
         <Card
           key={index}
           onClick={() => {
