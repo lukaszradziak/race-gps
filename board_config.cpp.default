@@ -1,0 +1,3 @@
+#define GPS_TX 25         // GPS transmit (RX at UART) - required
+#define GPS_RX 26         // GPS receive (TX at UART) - optional, but strongly recommended
+#define GPS_BAUD_DEF 9600 // GPS factory default baud rate, usually 9600
