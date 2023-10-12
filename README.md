@@ -18,6 +18,11 @@ https://race-gps.netlify.app
 * ESP32
 * GPS 10Hz: VK2828U7G5LF
 
+## Board configuration
+
+IMPORTANT! Before compiling sketch, copy `board_config.cpp.default` to `src/board_config.cpp`!
+Then if you want to overwrite defualt GPS board pinout configuration edit suitable pin numbers.
+
 ## Build board
 
 * Install PlatformIO
