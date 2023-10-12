@@ -4,7 +4,7 @@ import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { Button } from "../components/Button.tsx";
-import { RefObject, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Info } from "../components/Info.tsx";
 import Highcharts from "highcharts";
 import { useInterval } from "react-use";
@@ -13,7 +13,7 @@ import { downloadFile } from "../utils/utils.ts";
 import HighchartsReact from "highcharts-react-official";
 
 const dyno = new DynoClass();
-const chartOptions = {
+const chartOptions: Highcharts.Options = {
   title: {
     text: undefined,
   },
@@ -34,23 +34,25 @@ const chartOptions = {
     },
   ],
   series: [
-    // TODO
     {
       name: "Power (KM)",
+      type: "line",
       data: [],
       color: "red",
-    } as never,
+    },
     {
       yAxis: 1,
       name: "Torque (Nm)",
+      type: "line",
       data: [],
       color: "blue",
-    } as never,
+    },
     {
       name: "Loss (KM)",
+      type: "line",
       data: [],
       color: "orange",
-    } as never,
+    },
   ],
   plotOptions: {
     series: {
@@ -64,10 +66,7 @@ const chartOptions = {
 export function Dyno() {
   const [speed, setSpeed] = useState(0);
   const [settings] = useSettingReducer();
-  const chartRef = useRef<{
-    chart: Highcharts.Chart;
-    container: RefObject<HTMLDivElement>;
-  }>(null);
+  const chartRef = useRef<HighchartsReact.RefObject>(null);
 
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
