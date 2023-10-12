@@ -5,13 +5,12 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <SoftwareSerial.h>
+#include "board_config.cpp"
 
 #define SERVICE_UUID "65316b7c-b605-45b4-be6d-b02473b0d29a"
 #define CHARACTERISTIC_UUID "c8ad396d-8006-488d-beed-3a55c4b5ccae"
 
 #define GPS_DEBUG 0
-#define GPS_TX 25
-#define GPS_RX 26
 
 const byte gps_setup_10Hz[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12, 0xB5, 0x62, 0x06, 0x08, 0x00, 0x00, 0x0E, 0x30};
 const byte gps_setup_115200baud[] = {0xb5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xd0, 0x08, 0x00, 0x00, 0x00, 0xc2, 0x01, 0x00, 0x07, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc4, 0x96, 0xb5, 0x62, 0x06, 0x00, 0x01, 0x00, 0x01, 0x08, 0x22};
@@ -44,139 +43,139 @@ int lastTime = 0;
 
 class MyServerCallbacks : public BLEServerCallbacks
 {
-  void onConnect(BLEServer *pServer)
-  {
-    deviceConnected = true;
-  };
+    void onConnect(BLEServer *pServer)
+    {
+        deviceConnected = true;
+    };
 
-  void onDisconnect(BLEServer *pServer)
-  {
-    deviceConnected = false;
-  }
+    void onDisconnect(BLEServer *pServer)
+    {
+        deviceConnected = false;
+    }
 };
 
 void setup()
 {
-  Serial.begin(115200);
-  Serial.println("Hello in Race GPS!");
-  Serial.println();
+    Serial.begin(115200);
+    Serial.println("Hello in Race GPS!");
+    Serial.println();
 
-  Serial.println("GPS: setup in progress...");
-  ss.begin(9600);
-  delay(500);
+    Serial.println("GPS: setup in progress...");
+    ss.begin(GPS_BAUD_DEF);
+    delay(500);
 
-  ss.write(gps_setup_GPDTM_off, sizeof(gps_setup_GPDTM_off));
-  delay(100);
-  ss.write(gps_setup_GPGBS_off, sizeof(gps_setup_GPGBS_off));
-  delay(100);
-  ss.write(gps_setup_GPGLL_off, sizeof(gps_setup_GPGLL_off));
-  delay(100);
-  ss.write(gps_setup_GPGRS_off, sizeof(gps_setup_GPGRS_off));
-  delay(100);
-  ss.write(gps_setup_GPGSA_off, sizeof(gps_setup_GPGSA_off));
-  delay(100);
-  ss.write(gps_setup_GPGST_off, sizeof(gps_setup_GPGST_off));
-  delay(100);
-  ss.write(gps_setup_GPGSV_off, sizeof(gps_setup_GPGSV_off));
-  delay(100);
-  ss.write(gps_setup_GPVTG_off, sizeof(gps_setup_GPVTG_off));
-  delay(100);
-  ss.write(gps_setup_GPZDA_off, sizeof(gps_setup_GPZDA_off));
-  delay(100);
-  ss.write(gps_setup_38400baud, sizeof(gps_setup_38400baud));
-  delay(100);
-  ss.write(gps_setup_10Hz, sizeof(gps_setup_10Hz));
-  delay(100);
+    ss.write(gps_setup_GPDTM_off, sizeof(gps_setup_GPDTM_off));
+    delay(100);
+    ss.write(gps_setup_GPGBS_off, sizeof(gps_setup_GPGBS_off));
+    delay(100);
+    ss.write(gps_setup_GPGLL_off, sizeof(gps_setup_GPGLL_off));
+    delay(100);
+    ss.write(gps_setup_GPGRS_off, sizeof(gps_setup_GPGRS_off));
+    delay(100);
+    ss.write(gps_setup_GPGSA_off, sizeof(gps_setup_GPGSA_off));
+    delay(100);
+    ss.write(gps_setup_GPGST_off, sizeof(gps_setup_GPGST_off));
+    delay(100);
+    ss.write(gps_setup_GPGSV_off, sizeof(gps_setup_GPGSV_off));
+    delay(100);
+    ss.write(gps_setup_GPVTG_off, sizeof(gps_setup_GPVTG_off));
+    delay(100);
+    ss.write(gps_setup_GPZDA_off, sizeof(gps_setup_GPZDA_off));
+    delay(100);
+    ss.write(gps_setup_38400baud, sizeof(gps_setup_38400baud));
+    delay(100);
+    ss.write(gps_setup_10Hz, sizeof(gps_setup_10Hz));
+    delay(100);
 
-  Serial.println("GPS: setup is completed");
-  ss.end();
-  ss.begin(38400);
+    Serial.println("GPS: setup is completed");
+    ss.end();
+    ss.begin(38400);
 
-  BLEDevice::init("ESP32");
-  pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
-  BLEService *pService = pServer->createService(SERVICE_UUID);
-  pCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_READ |
-          BLECharacteristic::PROPERTY_WRITE |
-          BLECharacteristic::PROPERTY_NOTIFY |
-          BLECharacteristic::PROPERTY_INDICATE);
-  pCharacteristic->addDescriptor(new BLE2902());
-  pService->start();
+    BLEDevice::init("ESP32");
+    pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
+    BLEService *pService = pServer->createService(SERVICE_UUID);
+    pCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_NOTIFY |
+            BLECharacteristic::PROPERTY_INDICATE);
+    pCharacteristic->addDescriptor(new BLE2902());
+    pService->start();
 
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);
-  BLEDevice::startAdvertising();
+    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->setScanResponse(false);
+    pAdvertising->setMinPreferred(0x0);
+    BLEDevice::startAdvertising();
 }
 
 void loop()
 {
 #if GPS_DEBUG
-  while (ss.available() > 0)
-  {
-    int read = ss.read();
-    if (gps.encode(read))
-    {
-      Serial.printf(
-          "\n> satellites: %d, speed: %d, alt: %d, time: %d\n",
-          gps.satellites.value(),
-          gps.speed.value(),
-          gps.altitude.value(),
-          gps.time.value());
-    }
-    else
-    {
-      Serial.printf("%c", read);
-    }
-  }
-#endif
-
-  if (deviceConnected)
-  {
     while (ss.available() > 0)
     {
-      if (gps.encode(ss.read()))
-      {
-        uint32_t time = gps.time.value();
-        int satellites = gps.satellites.value();
-        int32_t speed = gps.speed.value();
-        int32_t alt = gps.altitude.value();
-
-        data[0] = (alt >> 8) & 0xff;
-        data[1] = alt & 0xff;
-        data[2] = (speed >> 8) & 0xff;
-        data[3] = speed & 0xff;
-        data[4] = satellites & 0xff;
-        data[5] = (time >> 24) & 0xff;
-        data[6] = (time >> 16) & 0xff;
-        data[7] = (time >> 8) & 0xff;
-        data[8] = time & 0xff;
-
-        if (lastTime != time)
+        int read = ss.read();
+        if (gps.encode(read))
         {
-          pCharacteristic->setValue(data, 9);
-          pCharacteristic->notify();
-          lastTime = time;
+            Serial.printf(
+                "\n> satellites: %d, speed: %d, alt: %d, time: %d\n",
+                gps.satellites.value(),
+                gps.speed.value(),
+                gps.altitude.value(),
+                gps.time.value());
         }
-      }
+        else
+        {
+            Serial.printf("%c", read);
+        }
+    }
+#endif
+
+    if (deviceConnected)
+    {
+        while (ss.available() > 0)
+        {
+            if (gps.encode(ss.read()))
+            {
+                uint32_t time = gps.time.value();
+                int satellites = gps.satellites.value();
+                int32_t speed = gps.speed.value();
+                int32_t alt = gps.altitude.value();
+
+                data[0] = (alt >> 8) & 0xff;
+                data[1] = alt & 0xff;
+                data[2] = (speed >> 8) & 0xff;
+                data[3] = speed & 0xff;
+                data[4] = satellites & 0xff;
+                data[5] = (time >> 24) & 0xff;
+                data[6] = (time >> 16) & 0xff;
+                data[7] = (time >> 8) & 0xff;
+                data[8] = time & 0xff;
+
+                if (lastTime != time)
+                {
+                    pCharacteristic->setValue(data, 9);
+                    pCharacteristic->notify();
+                    lastTime = time;
+                }
+            }
+        }
+
+        delay(1);
     }
 
-    delay(1);
-  }
+    if (!deviceConnected && oldDeviceConnected)
+    {
+        delay(500);
+        pServer->startAdvertising();
+        Serial.println("start advertising");
+        oldDeviceConnected = deviceConnected;
+    }
 
-  if (!deviceConnected && oldDeviceConnected)
-  {
-    delay(500);
-    pServer->startAdvertising();
-    Serial.println("start advertising");
-    oldDeviceConnected = deviceConnected;
-  }
-
-  if (deviceConnected && !oldDeviceConnected)
-  {
-    oldDeviceConnected = deviceConnected;
-  }
+    if (deviceConnected && !oldDeviceConnected)
+    {
+        oldDeviceConnected = deviceConnected;
+    }
 }
