@@ -25,12 +25,14 @@ const chartOptions: Highcharts.Options = {
       title: {
         text: "Torque (Nm)",
       },
+      min: 0,
     },
     {
       opposite: true,
       title: {
         text: "Power (KM)",
       },
+      min: 0,
     },
   ],
   series: [
@@ -108,6 +110,11 @@ export function Dyno() {
     chart.series[0].setData(records.map((record) => record.powerKmAvg));
     chart.series[1].setData(records.map((record) => record.torqueAvg));
     chart.series[2].setData(records.map((record) => record.lossKm));
+    chart.xAxis[0].update({
+      categories: records.map((record) =>
+        String(Math.floor(record.engineSpeed)),
+      ),
+    });
   }, 100);
 
   return (

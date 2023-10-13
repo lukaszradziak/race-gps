@@ -32,6 +32,8 @@ export function TestMode({
 
       const lines = String(fileReader.result)
         .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line)
         .map((line) => line.split(","));
 
       const header = lines.shift() ?? [];
