@@ -34,8 +34,30 @@ export class Dyno {
   private lossRecords: number = 0;
   private lossStarted: boolean = false;
   private lossEnded: boolean = false;
+  private weight: number = 0;
+  private speedOn3000rpm: number = 0;
+  private cx: number = 0;
+  private frontalSurface: number = 0;
+  private testWheelLoss: number = 0;
+  private airDensity: number = 0;
 
   public constructor(private minimumRecordsToMeasure: number = 20) {}
+
+  public setConfig(
+    weight: number,
+    speedOn3000rpm: number,
+    cx: number,
+    frontalSurface: number,
+    testWheelLoss: number,
+    airDensity: number,
+  ) {
+    this.weight = weight;
+    this.speedOn3000rpm = speedOn3000rpm;
+    this.cx = cx;
+    this.frontalSurface = frontalSurface;
+    this.testWheelLoss = testWheelLoss;
+    this.airDensity = airDensity;
+  }
 
   public addRecord(
     speed: number,
@@ -44,8 +66,8 @@ export class Dyno {
     satellites?: number,
   ): void {
     const previousRecord = this.records[this.records.length - 1];
-    const engineSpeed = (speed * 3000) / 68;
-    const weight = 1560;
+    const engineSpeed = (speed * 3000) / this.speedOn3000rpm;
+    const weight = this.weight;
     const speedMs = speed * 0.277777778;
     const ek = (weight * Math.pow(speedMs, 2)) / 2;
     const measureTime = (time - (previousRecord?.time || 0)) / 100;
@@ -54,14 +76,14 @@ export class Dyno {
     const powerKm = powerKw / 0.73549875;
     const torque = (9549.3 * previousRecord?.powerKw) / engineSpeed;
 
-    const wheelLoss = 0.0026 * Math.pow(speed, 2);
-    const airDensity = 1.1225;
-    const cx = 0.28;
-    const surface = 2;
+    const wheelLossValue = this.testWheelLoss * Math.pow(speed, 2);
+    const airDensity = this.airDensity;
+    const cx = this.cx;
+    const surface = this.frontalSurface;
     const airLoss =
       0.0005 * cx * surface * airDensity * Math.pow(speedMs, 3) * 1.359;
 
-    const powerKmWithLoss = powerKm + wheelLoss + airLoss;
+    const powerKmWithLoss = powerKm + wheelLossValue + airLoss;
     const torqueWithLoss = (9549.3 * powerKmWithLoss) / 1.36 / engineSpeed;
 
     this.records.push({
@@ -80,7 +102,7 @@ export class Dyno {
       powerKw,
       powerKm,
       torque,
-      lossKm: wheelLoss + airLoss,
+      lossKm: wheelLossValue + airLoss,
       powerKmWithLoss,
       torqueWithLoss,
       powerKmAvg: 0,
@@ -127,8 +149,14 @@ export class Dyno {
     );
   }
 
-  public clear() {
+  public reset() {
     this.records = [];
+    this.powerRecords = 0;
+    this.powerStarted = false;
+    this.powerEnded = false;
+    this.lossRecords = 0;
+    this.lossStarted = false;
+    this.lossEnded = false;
   }
 
   private parsePowerRecords(): void {
