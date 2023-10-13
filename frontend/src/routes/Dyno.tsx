@@ -4,16 +4,24 @@ import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { Button } from "../components/Button.tsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Info } from "../components/Info.tsx";
-import { useInterval } from "react-use";
 import { Dyno as DynoClass } from "../classes/dyno.ts";
 import { downloadFile } from "../utils/utils.ts";
+
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import HighchartsIndicators from "highcharts/indicators/indicators";
+import HighchartsRegressions from "highcharts/indicators/regressions";
+HighchartsIndicators(Highcharts);
+HighchartsRegressions(Highcharts);
 
 const dyno = new DynoClass();
-const chartOptions: Highcharts.Options = {
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const chartOptions: any = {
+  chart: {
+    renderTo: "chart",
+  },
   title: {
     text: undefined,
   },
@@ -41,6 +49,8 @@ const chartOptions: Highcharts.Options = {
       type: "line",
       data: [],
       color: "red",
+      id: "power",
+      opacity: 0.3,
     },
     {
       yAxis: 1,
@@ -48,12 +58,35 @@ const chartOptions: Highcharts.Options = {
       type: "line",
       data: [],
       color: "blue",
+      id: "torque",
+      opacity: 0.3,
     },
     {
       name: "Loss (KM)",
       type: "line",
       data: [],
       color: "orange",
+      visible: false,
+    },
+    {
+      type: "linearRegression",
+      linkedTo: "power",
+      zIndex: 10,
+      params: {
+        period: 15,
+      },
+      showInLegend: true,
+      color: "red",
+    },
+    {
+      type: "linearRegression",
+      linkedTo: "torque",
+      zIndex: 10,
+      params: {
+        period: 15,
+      },
+      showInLegend: true,
+      color: "blue",
     },
   ],
   plotOptions: {
@@ -71,7 +104,8 @@ const chartOptions: Highcharts.Options = {
 export function Dyno() {
   const [speed, setSpeed] = useState(0);
   const [settings] = useSettingReducer();
-  const chartRef = useRef<HighchartsReact.RefObject>(null);
+  const [chart, setChart] = useState<Highcharts.Chart>();
+  const [lastUpdateChart, setLastUpdateChart] = useState(0);
 
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
@@ -85,6 +119,33 @@ export function Dyno() {
   const handleTestSpeed = (speed: number, time: number) => {
     setSpeed(speed);
     dyno.addRecord(speed, time);
+
+    if (Date.now() - lastUpdateChart < 100) {
+      return;
+    }
+
+    setLastUpdateChart(Date.now());
+
+    const records = dyno.getPowerRecords();
+
+    if (!records.length || !chart) {
+      return;
+    }
+
+    chart.setTitle({
+      text: `${Math.floor(chart.series[3].dataMax || 0)} KM / ${Math.floor(
+        chart.series[4].dataMax || 0,
+      )} Nm`,
+    });
+
+    chart.series[0].setData(records.map((record) => record.powerKmAvg));
+    chart.series[1].setData(records.map((record) => record.torqueAvg));
+    chart.series[2].setData(records.map((record) => record.lossKm));
+    chart.xAxis[0].update({
+      categories: records.map((record) =>
+        String(Math.floor(record.engineSpeed)),
+      ),
+    });
   };
 
   const handleTestFileUpload = () => {
@@ -106,24 +167,6 @@ export function Dyno() {
     );
   };
 
-  useInterval(() => {
-    const chart = chartRef.current?.chart;
-    const records = dyno.getPowerRecords();
-
-    if (!records.length || !chart) {
-      return;
-    }
-
-    chart.series[0].setData(records.map((record) => record.powerKmAvg));
-    chart.series[1].setData(records.map((record) => record.torqueAvg));
-    chart.series[2].setData(records.map((record) => record.lossKm));
-    chart.xAxis[0].update({
-      categories: records.map((record) =>
-        String(Math.floor(record.engineSpeed)),
-      ),
-    });
-  }, 100);
-
   useEffect(() => {
     dyno.setConfig(
       settings.weight,
@@ -133,7 +176,11 @@ export function Dyno() {
       settings.testWheelLoss,
       settings.airDensity,
     );
-  }, [settings]);
+
+    if (!chart) {
+      setChart(Highcharts.chart(chartOptions));
+    }
+  }, [chart, settings]);
 
   return (
     <>
@@ -156,11 +203,7 @@ export function Dyno() {
       </Card>
 
       <Card>
-        <HighchartsReact
-          ref={chartRef}
-          highcharts={Highcharts}
-          options={chartOptions}
-        />
+        <div id="chart"></div>
         <Button onClick={downloadDynoCSV}>Export CSV</Button>
       </Card>
 
