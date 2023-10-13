@@ -4,7 +4,7 @@ import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { Button } from "../components/Button.tsx";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Info } from "../components/Info.tsx";
 import Highcharts from "highcharts";
 import { useInterval } from "react-use";
@@ -63,6 +63,9 @@ const chartOptions: Highcharts.Options = {
       },
     },
   },
+  accessibility: {
+    enabled: false,
+  },
 };
 
 export function Dyno() {
@@ -82,6 +85,10 @@ export function Dyno() {
   const handleTestSpeed = (speed: number, time: number) => {
     setSpeed(speed);
     dyno.addRecord(speed, time);
+  };
+
+  const handleTestFileUpload = () => {
+    dyno.reset();
   };
 
   const downloadDynoCSV = () => {
@@ -117,6 +124,17 @@ export function Dyno() {
     });
   }, 100);
 
+  useEffect(() => {
+    dyno.setConfig(
+      settings.weight,
+      settings.speedOn3000rpm,
+      settings.cx,
+      settings.frontalSurface,
+      settings.testWheelLoss,
+      settings.airDensity,
+    );
+  }, [settings]);
+
   return (
     <>
       <Card title="Dyno">
@@ -147,7 +165,11 @@ export function Dyno() {
       </Card>
 
       {settings.testMode ? (
-        <TestMode value={speed} onChange={handleTestSpeed} />
+        <TestMode
+          value={speed}
+          onChange={handleTestSpeed}
+          onFileUpload={handleTestFileUpload}
+        />
       ) : null}
     </>
   );

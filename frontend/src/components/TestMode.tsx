@@ -16,11 +16,13 @@ export function TestMode({
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
 
-    if (!event.target.files) {
-      throw new Error("Problem with files");
+    if (!event.target.files?.length) {
+      throw new Error("File is not selected");
     }
 
     fileReader.readAsText(event.target.files[0]);
+    event.target.value = "";
+
     fileReader.onload = () => {
       if (!fileReader.result) {
         throw new Error("Empty file");
