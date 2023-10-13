@@ -35,7 +35,7 @@ export class Dyno {
   private lossStarted: boolean = false;
   private lossEnded: boolean = false;
 
-  public constructor(private minimumRecordsToMeasure: number = 50) {}
+  public constructor(private minimumRecordsToMeasure: number = 20) {}
 
   public addRecord(
     speed: number,
@@ -48,7 +48,7 @@ export class Dyno {
     const weight = 1560;
     const speedMs = speed * 0.277777778;
     const ek = (weight * Math.pow(speedMs, 2)) / 2;
-    const measureTime = 0.1;
+    const measureTime = (time - (previousRecord?.time || 0)) / 100;
     const i = (ek - previousRecord?.ek) / measureTime;
     const powerKw = i / 1000;
     const powerKm = powerKw / 0.73549875;
