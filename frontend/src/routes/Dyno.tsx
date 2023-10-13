@@ -6,10 +6,10 @@ import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { Button } from "../components/Button.tsx";
 import { useEffect, useRef, useState } from "react";
 import { Info } from "../components/Info.tsx";
-import Highcharts from "highcharts";
 import { useInterval } from "react-use";
 import { Dyno as DynoClass } from "../classes/dyno.ts";
 import { downloadFile } from "../utils/utils.ts";
+import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 
 const dyno = new DynoClass();
@@ -138,7 +138,7 @@ export function Dyno() {
   return (
     <>
       <Card title="Dyno">
-        <div className="mt-1 text-8xl font-semibold tracking-tight text-gray-900 py-4 text-center">
+        <div className="mt-1 text-4xl font-semibold tracking-tight text-gray-900 py-4 text-center">
           {Math.floor(speed)}
         </div>
         <div className="flex flex-col w-full">

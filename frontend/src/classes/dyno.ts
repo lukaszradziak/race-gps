@@ -66,25 +66,6 @@ export class Dyno {
     satellites?: number,
   ): void {
     const previousRecord = this.records[this.records.length - 1];
-    const engineSpeed = (speed * 3000) / this.speedOn3000rpm;
-    const weight = this.weight;
-    const speedMs = speed * 0.277777778;
-    const ek = (weight * Math.pow(speedMs, 2)) / 2;
-    const measureTime = (time - (previousRecord?.time || 0)) / 100;
-    const i = (ek - previousRecord?.ek) / measureTime;
-    const powerKw = i / 1000;
-    const powerKm = powerKw / 0.73549875;
-    const torque = (9549.3 * previousRecord?.powerKw) / engineSpeed;
-
-    const wheelLossValue = this.testWheelLoss * Math.pow(speed, 2);
-    const airDensity = this.airDensity;
-    const cx = this.cx;
-    const surface = this.frontalSurface;
-    const airLoss =
-      0.0005 * cx * surface * airDensity * Math.pow(speedMs, 3) * 1.359;
-
-    const powerKmWithLoss = powerKm + wheelLossValue + airLoss;
-    const torqueWithLoss = (9549.3 * powerKmWithLoss) / 1.36 / engineSpeed;
 
     this.records.push({
       speed,
@@ -94,17 +75,17 @@ export class Dyno {
       increment: Math.floor(previousRecord?.speed) <= Math.floor(speed),
       decrement: Math.floor(previousRecord?.speed) >= Math.floor(speed),
       status: undefined,
-      weight,
-      speedMs,
-      engineSpeed,
-      measureTime,
-      ek,
-      powerKw,
-      powerKm,
-      torque,
-      lossKm: wheelLossValue + airLoss,
-      powerKmWithLoss,
-      torqueWithLoss,
+      weight: 0,
+      speedMs: 0,
+      engineSpeed: 0,
+      measureTime: 0,
+      ek: 0,
+      powerKw: 0,
+      powerKm: 0,
+      torque: 0,
+      lossKm: 0,
+      powerKmWithLoss: 0,
+      torqueWithLoss: 0,
       powerKmAvg: 0,
       torqueAvg: 0,
     });
@@ -113,31 +94,54 @@ export class Dyno {
   }
 
   public getPowerRecords(): DynoRecord[] {
-    return this.records
+    const records: DynoRecord[] = [...this.records];
+
+    for (const recordIndex in this.records) {
+      const record = records[recordIndex];
+      const previousRecord = records[parseInt(recordIndex) - 1];
+
+      record.engineSpeed = (record.speed * 3000) / this.speedOn3000rpm;
+      record.speedMs = record.speed * 0.277777778;
+      record.ek = (this.weight * Math.pow(record.speedMs, 2)) / 2;
+      record.measureTime = (record.time - (previousRecord?.time || 0)) / 100;
+      const i = (record.ek - previousRecord?.ek) / record.measureTime;
+      record.powerKw = i / 1000;
+      record.powerKm = record.powerKw / 0.73549875;
+      record.torque = (9549.3 * previousRecord?.powerKw) / record.engineSpeed;
+
+      const wheelLossValue = this.testWheelLoss * Math.pow(record.speed, 2);
+      const airLoss =
+        0.0005 *
+        this.cx *
+        this.frontalSurface *
+        this.airDensity *
+        Math.pow(record.speedMs, 3) *
+        1.359;
+
+      record.powerKmWithLoss = record.powerKm + wheelLossValue + airLoss;
+      record.torqueWithLoss =
+        (9549.3 * record.powerKmWithLoss) / 1.36 / record.engineSpeed;
+      record.lossKm = wheelLossValue + airLoss;
+    }
+
+    return records
       .map((record, index) => {
-        const avg = 3;
-        let sumAvg = 0;
-
-        for (let i = -avg; i <= avg; i++) {
-          sumAvg += this.records[index - i]?.powerKmWithLoss;
-        }
-
         return {
           ...record,
-          powerKmAvg: sumAvg / (avg * 2 + 1),
-        };
-      })
-      .map((record, index) => {
-        const avg = 3;
-        let sumAvg = 0;
-
-        for (let i = -avg; i <= avg; i++) {
-          sumAvg += this.records[index - i]?.torqueWithLoss;
-        }
-
-        return {
-          ...record,
-          torqueAvg: sumAvg / (avg * 2 + 1),
+          powerKmAvg:
+            (records[index - 2]?.powerKmWithLoss * 0.4 +
+              records[index - 1]?.powerKmWithLoss * 0.6 +
+              records[index]?.powerKmWithLoss +
+              records[index + 1]?.powerKmWithLoss * 0.6 +
+              records[index + 2]?.powerKmWithLoss * 0.4) /
+            3,
+          torqueAvg:
+            (records[index - 2]?.torqueWithLoss * 0.4 +
+              records[index - 1]?.torqueWithLoss * 0.6 +
+              records[index]?.torqueWithLoss +
+              records[index + 1]?.torqueWithLoss * 0.6 +
+              records[index + 2]?.torqueWithLoss * 0.4) /
+            3,
         };
       })
       .filter((record) => record.status === DynoRecordStatus.Power);
