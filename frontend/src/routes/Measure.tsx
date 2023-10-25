@@ -46,14 +46,6 @@ export function Measure() {
     },
   });
 
-  const handleConnect = () => {
-    connect();
-  };
-
-  const handleDisconnect = () => {
-    disconnect();
-  };
-
   const handleDownloadCsv = () => {
     downloadFile(
       Object.keys(csvData[0]).join(",") +
@@ -139,11 +131,11 @@ export function Measure() {
           </div>
           <div className="flex flex-col w-full">
             {connected ? (
-              <Button onClick={handleDisconnect} size="lg">
+              <Button onClick={() => disconnect()} size="lg">
                 Disconnect
               </Button>
             ) : (
-              <Button onClick={handleConnect} size="lg">
+              <Button onClick={() => connect()} size="lg">
                 Connect
               </Button>
             )}

@@ -5,32 +5,46 @@ import { actualTime } from "../utils/number.ts";
 export function TestMode({
   value,
   onChange,
+  onFileUpload,
 }: {
   value: number;
   onChange: (speed: number, time: number) => void;
+  onFileUpload?: () => void;
 }) {
   const [startTime, setStartTime] = useState(0);
 
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
 
-    if (!event.target.files) {
-      throw new Error("Problem with files");
+    if (!event.target.files?.length) {
+      throw new Error("File is not selected");
     }
 
     fileReader.readAsText(event.target.files[0]);
+    event.target.value = "";
+
     fileReader.onload = () => {
       if (!fileReader.result) {
         throw new Error("Empty file");
       }
 
-      String(fileReader.result)
+      if (onFileUpload) {
+        onFileUpload();
+      }
+
+      const lines = String(fileReader.result)
         .split("\n")
-        .filter((_line, index) => index > 0)
-        .forEach((line) => {
-          const cols = line.split(",");
-          onChange(parseFloat(cols[3]), parseInt(cols[0]));
-        });
+        .map((line) => line.trim())
+        .filter((line) => line)
+        .map((line) => line.split(","));
+
+      const header = lines.shift() ?? [];
+      const timeColumn = header.findIndex((value) => value === "time");
+      const speedColumn = header.findIndex((value) => value === "speed");
+
+      lines.forEach((line) => {
+        onChange(parseFloat(line[speedColumn]), parseInt(line[timeColumn]));
+      });
     };
   };
 

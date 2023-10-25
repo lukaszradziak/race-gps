@@ -4,6 +4,12 @@ import { useCallback, useReducer } from "react";
 interface ReducerState {
   speed: { start: number; end: number }[];
   testMode: boolean;
+  weight: number;
+  speedOn3000rpm: number;
+  cx: number;
+  frontalSurface: number;
+  testWheelLoss: number;
+  airDensity: number;
 }
 
 type Save = { type: "save"; payload: ReducerState };
@@ -19,6 +25,12 @@ const INITIAL_STATE: ReducerState = {
     { start: 100, end: 200 },
   ],
   testMode: false,
+  weight: 1560,
+  speedOn3000rpm: 68,
+  cx: 0.28,
+  frontalSurface: 2.15,
+  testWheelLoss: 0.0026,
+  airDensity: 1.1225,
 };
 
 function reducer(state: ReducerState, action: ReducerActions): ReducerState {
@@ -31,6 +43,17 @@ function reducer(state: ReducerState, action: ReducerActions): ReducerState {
       return state;
   }
 }
+
+const fillInitialValues = (
+  savedState: ReducerState | undefined,
+  initialState: ReducerState,
+) => {
+  if (!savedState) {
+    return initialState;
+  }
+
+  return { ...INITIAL_STATE, ...savedState };
+};
 
 export const useSettingReducer = () => {
   const [savedState, saveState] = useLocalStorage(
@@ -49,5 +72,8 @@ export const useSettingReducer = () => {
     [saveState],
   );
 
-  return useReducer(reducerLocalStorage, savedState || INITIAL_STATE);
+  return useReducer(
+    reducerLocalStorage,
+    fillInitialValues(savedState, INITIAL_STATE),
+  );
 };
