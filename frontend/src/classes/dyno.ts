@@ -1,3 +1,5 @@
+import { averageValues } from "../utils/number.ts";
+
 enum DynoRecordStatus {
   Power = "power",
   Loss = "loss",
@@ -16,6 +18,7 @@ interface DynoRecord {
   engineSpeed: number;
   measureTime: number;
   ek: number;
+  deltaEk: number;
   powerKw: number;
   powerKm: number;
   torque: number;
@@ -24,6 +27,8 @@ interface DynoRecord {
   torqueWithLoss: number;
   powerKmAvg: number;
   torqueAvg: number;
+  powerKmAvg2: number;
+  torqueAvg2: number;
 }
 
 export class Dyno {
@@ -80,6 +85,7 @@ export class Dyno {
       engineSpeed: 0,
       measureTime: 0,
       ek: 0,
+      deltaEk: 0,
       powerKw: 0,
       powerKm: 0,
       torque: 0,
@@ -88,6 +94,8 @@ export class Dyno {
       torqueWithLoss: 0,
       powerKmAvg: 0,
       torqueAvg: 0,
+      powerKmAvg2: 0,
+      torqueAvg2: 0,
     });
 
     this.parseRecords();
@@ -104,8 +112,9 @@ export class Dyno {
       record.speedMs = record.speed * 0.277777778;
       record.ek = (this.weight * Math.pow(record.speedMs, 2)) / 2;
       record.measureTime = (record.time - (previousRecord?.time || 0)) / 100;
-      const i = (record.ek - previousRecord?.ek) / record.measureTime;
-      record.powerKw = i / 1000;
+      record.deltaEk =
+        (record.ek - (previousRecord?.ek || 0)) / record.measureTime;
+      record.powerKw = record.deltaEk / 1000;
       record.powerKm = record.powerKw / 0.73549875;
       record.torque = (9549.3 * previousRecord?.powerKw) / record.engineSpeed;
 
@@ -124,27 +133,39 @@ export class Dyno {
       record.lossKm = wheelLossValue + airLoss;
     }
 
-    return records
-      .map((record, index) => {
-        return {
-          ...record,
-          powerKmAvg:
-            (records[index - 2]?.powerKmWithLoss * 0.4 +
-              records[index - 1]?.powerKmWithLoss * 0.6 +
-              records[index]?.powerKmWithLoss +
-              records[index + 1]?.powerKmWithLoss * 0.6 +
-              records[index + 2]?.powerKmWithLoss * 0.4) /
-            3,
-          torqueAvg:
-            (records[index - 2]?.torqueWithLoss * 0.4 +
-              records[index - 1]?.torqueWithLoss * 0.6 +
-              records[index]?.torqueWithLoss +
-              records[index + 1]?.torqueWithLoss * 0.6 +
-              records[index + 2]?.torqueWithLoss * 0.4) /
-            3,
-        };
-      })
-      .filter((record) => record.status === DynoRecordStatus.Power);
+    records.forEach((_record, index) => {
+      records[index].powerKmAvg = averageValues(
+        records.map((record) => record.powerKmWithLoss),
+        index,
+        8,
+      );
+
+      records[index].torqueAvg = averageValues(
+        records.map((record) => record.torqueWithLoss),
+        index,
+        8,
+      );
+    });
+
+    records.forEach((_record, index) => {
+      records[index].powerKmAvg2 =
+        (records[index - 2]?.powerKmAvg * 0.4 +
+          records[index - 1]?.powerKmAvg * 0.6 +
+          records[index]?.powerKmAvg +
+          records[index + 1]?.powerKmAvg * 0.6 +
+          records[index + 2]?.powerKmAvg * 0.4) /
+        3;
+
+      records[index].torqueAvg2 =
+        (records[index - 2]?.torqueAvg * 0.4 +
+          records[index - 1]?.torqueAvg * 0.6 +
+          records[index]?.torqueAvg +
+          records[index + 1]?.torqueAvg * 0.6 +
+          records[index + 2]?.torqueAvg * 0.4) /
+        3;
+    });
+
+    return records.filter((record) => record.status === DynoRecordStatus.Power);
   }
 
   public getLossRecords(): DynoRecord[] {

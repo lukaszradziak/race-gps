@@ -8,12 +8,8 @@ import { useEffect, useState } from "react";
 import { Info } from "../components/Info.tsx";
 import { Dyno as DynoClass } from "../classes/dyno.ts";
 import { downloadFile } from "../utils/utils.ts";
-
+import { useDebounce } from "react-use";
 import Highcharts from "highcharts";
-import HighchartsIndicators from "highcharts/indicators/indicators";
-import HighchartsRegressions from "highcharts/indicators/regressions";
-HighchartsIndicators(Highcharts);
-HighchartsRegressions(Highcharts);
 
 const dyno = new DynoClass();
 
@@ -45,48 +41,33 @@ const chartOptions: any = {
   ],
   series: [
     {
+      name: "Power Avg (KM)",
+      type: "line",
+      data: [],
+      color: "red",
+      opacity: 1,
+    },
+    {
+      yAxis: 1,
+      name: "Torque Avg (Nm)",
+      type: "line",
+      data: [],
+      color: "blue",
+      opacity: 1,
+    },
+    {
       name: "Power (KM)",
       type: "line",
       data: [],
       color: "red",
-      id: "power",
-      opacity: 0.3,
-    },
-    {
-      yAxis: 1,
-      name: "Torque (Nm)",
-      type: "line",
-      data: [],
-      color: "blue",
-      id: "torque",
-      opacity: 0.3,
+      opacity: 0.1,
     },
     {
       name: "Loss (KM)",
       type: "line",
       data: [],
       color: "orange",
-      visible: false,
-    },
-    {
-      type: "linearRegression",
-      linkedTo: "power",
-      zIndex: 10,
-      params: {
-        period: 15,
-      },
-      showInLegend: true,
-      color: "red",
-    },
-    {
-      type: "linearRegression",
-      linkedTo: "torque",
-      zIndex: 10,
-      params: {
-        period: 15,
-      },
-      showInLegend: true,
-      color: "blue",
+      opacity: 0.6,
     },
   ],
   plotOptions: {
@@ -105,7 +86,6 @@ export function Dyno() {
   const [speed, setSpeed] = useState(0);
   const [settings] = useSettingReducer();
   const [chart, setChart] = useState<Highcharts.Chart>();
-  const [lastUpdateChart, setLastUpdateChart] = useState(0);
 
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
@@ -116,36 +96,36 @@ export function Dyno() {
     },
   });
 
+  useDebounce(
+    () => {
+      const records = dyno.getPowerRecords();
+
+      if (!records.length || !chart) {
+        return;
+      }
+
+      chart.series[0].setData(records.map((record) => record.powerKmAvg2));
+      chart.series[1].setData(records.map((record) => record.torqueAvg2));
+      chart.series[2].setData(records.map((record) => record.powerKmWithLoss));
+      chart.series[3].setData(records.map((record) => record.lossKm));
+      chart.xAxis[0].update({
+        categories: records.map((record) =>
+          String(Math.floor(record.engineSpeed)),
+        ),
+      });
+      chart.setTitle({
+        text: `${Math.floor(chart.series[0].dataMax || 0)} KM / ${Math.floor(
+          chart.series[1].dataMax || 0,
+        )} Nm`,
+      });
+    },
+    100,
+    [speed],
+  );
+
   const handleTestSpeed = (speed: number, time: number) => {
     setSpeed(speed);
     dyno.addRecord(speed, time);
-
-    if (Date.now() - lastUpdateChart < 100) {
-      return;
-    }
-
-    setLastUpdateChart(Date.now());
-
-    const records = dyno.getPowerRecords();
-
-    if (!records.length || !chart) {
-      return;
-    }
-
-    chart.setTitle({
-      text: `${Math.floor(chart.series[3].dataMax || 0)} KM / ${Math.floor(
-        chart.series[4].dataMax || 0,
-      )} Nm`,
-    });
-
-    chart.series[0].setData(records.map((record) => record.powerKmAvg));
-    chart.series[1].setData(records.map((record) => record.torqueAvg));
-    chart.series[2].setData(records.map((record) => record.lossKm));
-    chart.xAxis[0].update({
-      categories: records.map((record) =>
-        String(Math.floor(record.engineSpeed)),
-      ),
-    });
   };
 
   const handleTestFileUpload = () => {
