@@ -82,7 +82,6 @@ export function Settings() {
 
   useEffect(() => {
     reset(state);
-    console.log("settings", state);
   }, [state, reset]);
 
   return (
