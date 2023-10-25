@@ -4,7 +4,19 @@
 
 https://race-gps.netlify.app
 
-<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/a931eb5f-34a2-4251-b80a-c3a56677c4cb">
+# Preview
+
+<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/f3024eac-58c4-47a9-bbe8-70fc2ba0ab84">
+<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/c3aa0147-f34a-4d1b-82d3-b5f8c1982dab">
+<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/504a501e-28a9-4c89-ac36-918832e6fb0b">
+
+# Model 3D
+
+https://www.thingiverse.com/thing:4724205
+
+<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/5ae62e3d-abcd-4d5f-94e9-b298494f22bb">
+<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/d2d15ee1-2a13-4c4d-9932-11132fdc98da">
+<img width="150" alt="image" src="https://github.com/lukaszradziak/race-gps/assets/1611323/92d7b461-f9ed-4176-95f7-3949d10c712d">
 
 # How to run on mobile
 
