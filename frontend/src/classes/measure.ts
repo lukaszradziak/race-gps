@@ -6,6 +6,7 @@ export interface MeasureRecord {
   index: number;
   foundSpeed?: number;
   foundTime?: number;
+  alt?: number;
 }
 
 export interface MeasureConfig {
@@ -45,11 +46,12 @@ export class Measure {
     });
   }
 
-  public addRecord(speed: number, time: string) {
+  public addRecord(speed: number, time: string, alt?: number) {
     const record: MeasureRecord = {
       speed: speed,
       time: parseToTime(time),
       index: this.records.length,
+      alt: alt,
     };
 
     for (const configRow of this.config) {

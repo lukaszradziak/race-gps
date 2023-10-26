@@ -40,7 +40,7 @@ export function Measure() {
       const data: GpsData = parseGpsData(
         (event.target as BluetoothRemoteGATTCharacteristic).value,
       );
-      addRecord(data.speed, data.time);
+      addRecord(data.speed, data.time, data.alt);
       setGpsData(data);
       setCsvData((previousCsvData) => [...previousCsvData, data]);
     },
@@ -55,8 +55,8 @@ export function Measure() {
     );
   };
 
-  const handleTestSpeed = (speed: number, time: string) => {
-    addRecord(speed, time);
+  const handleTestSpeed = (speed: number, time: string, alt?: number) => {
+    addRecord(speed, time, alt);
   };
 
   return (
@@ -158,15 +158,59 @@ export function Measure() {
                 record.foundSpeed !== undefined && record.foundSpeed >= 0,
             );
 
-            makeChart("chart", [
-              {
-                showInLegend: false,
-                name: "Speed",
-                data: measure.records
-                  .filter((_record, index) => index > firstFoundSpeedIndex)
-                  .map((record) => record.speed),
-              },
-            ]);
+            const filteredRecords = measure.records.filter(
+              (_record, index) => index > firstFoundSpeedIndex,
+            );
+
+            makeChart(
+              "chart",
+              [
+                {
+                  showInLegend: false,
+                  name: "Alt",
+                  yAxis: 1,
+                  data: filteredRecords.map(
+                    (record) => (record.alt || 0) / 100,
+                  ),
+                  opacity: 0.6,
+                  color: "red",
+                },
+                {
+                  showInLegend: false,
+                  name: "Speed",
+                  data: filteredRecords.map((record) => record.speed),
+                },
+              ],
+              [
+                {
+                  title: {
+                    text: "Speed (km/h)",
+                  },
+                  min: Math.min(
+                    ...filteredRecords.map((record) => record.speed),
+                  ),
+                  max: Math.max(
+                    ...filteredRecords.map((record) => record.speed),
+                  ),
+                },
+                {
+                  opposite: true,
+                  title: {
+                    text: "Alt (m)",
+                  },
+                  min: Math.min(
+                    ...filteredRecords.map(
+                      (record) => (record.alt || 0) / 100 - 4,
+                    ),
+                  ),
+                  max: Math.max(
+                    ...filteredRecords.map(
+                      (record) => (record.alt || 0) / 100 + 4,
+                    ),
+                  ),
+                },
+              ],
+            );
           }}
           className="cursor-pointer hover:bg-gray-50"
         >
@@ -181,7 +225,7 @@ export function Measure() {
       <Modal open={modalOpen} setOpen={setModalOpen}>
         {modalMeasure ? (
           <>
-            <div id="chart" className="mb-4"></div>
+            <div id="chart" className="mb-4 -ml-6 -mr-6"></div>
             <div className="grid grid-cols-2 gap-x-6">
               {[...modalMeasure.speedTime]
                 .filter((speedTime) => speedTime[0] > modalMeasure.start)

@@ -11,10 +11,10 @@ export function useMeasure({ speedConfig, onResult }: useMeasureParam) {
   const [speed, setSpeed] = useState(0);
   const [time, setTime] = useState("");
 
-  const addRecord = (speed: number, time: string) => {
+  const addRecord = (speed: number, time: string, alt?: number) => {
     setSpeed(speed);
     setTime(time);
-    measure.addRecord(speed, time);
+    measure.addRecord(speed, time, alt);
   };
 
   useEffect(() => {
