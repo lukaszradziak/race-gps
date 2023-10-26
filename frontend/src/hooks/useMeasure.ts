@@ -9,9 +9,9 @@ interface useMeasureParam {
 
 export function useMeasure({ speedConfig, onResult }: useMeasureParam) {
   const [speed, setSpeed] = useState(0);
-  const [time, setTime] = useState(0);
+  const [time, setTime] = useState("");
 
-  const addRecord = (speed: number, time: number) => {
+  const addRecord = (speed: number, time: string) => {
     setSpeed(speed);
     setTime(time);
     measure.addRecord(speed, time);

@@ -18,7 +18,7 @@ export function Measure() {
   const [gpsData, setGpsData] = useState<GpsData>({
     satellites: 0,
     alt: 0,
-    time: 0,
+    time: "",
     speed: 0,
   });
   const [csvData, setCsvData] = useState<GpsData[]>([]);
@@ -55,7 +55,7 @@ export function Measure() {
     );
   };
 
-  const handleTestSpeed = (speed: number, time: number) => {
+  const handleTestSpeed = (speed: number, time: string) => {
     addRecord(speed, time);
   };
 
@@ -190,12 +190,7 @@ export function Measure() {
                     <span>
                       {modalMeasure.start} - {speedTime[0]}
                     </span>
-                    <span>
-                      {((speedTime[1] - modalMeasure.startTime) / 100).toFixed(
-                        2,
-                      )}
-                      s
-                    </span>
+                    <span>{(speedTime[1] / 100).toFixed(2)}s</span>
                   </div>
                 ))}
             </div>

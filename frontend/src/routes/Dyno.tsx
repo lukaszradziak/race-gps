@@ -123,7 +123,7 @@ export function Dyno() {
     [speed],
   );
 
-  const handleTestSpeed = (speed: number, time: number) => {
+  const handleTestSpeed = (speed: number, time: string) => {
     setSpeed(speed);
     dyno.addRecord(speed, time);
   };

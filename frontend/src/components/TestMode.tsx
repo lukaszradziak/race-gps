@@ -8,7 +8,7 @@ export function TestMode({
   onFileUpload,
 }: {
   value: number;
-  onChange: (speed: number, time: number) => void;
+  onChange: (speed: number, time: string) => void;
   onFileUpload?: () => void;
 }) {
   const [startTime, setStartTime] = useState(0);
@@ -43,7 +43,7 @@ export function TestMode({
       const speedColumn = header.findIndex((value) => value === "speed");
 
       lines.forEach((line) => {
-        onChange(parseFloat(line[speedColumn]), parseInt(line[timeColumn]));
+        onChange(parseFloat(line[speedColumn]), line[timeColumn]);
       });
     };
   };
