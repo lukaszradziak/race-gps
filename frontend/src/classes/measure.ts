@@ -1,3 +1,5 @@
+import { parseToTime } from "../utils/number.ts";
+
 export interface MeasureRecord {
   speed: number;
   time: number;
@@ -21,7 +23,6 @@ export interface MeasureResult {
   start: number;
   end: number;
   measureTime: number;
-  startTime: number;
   speedTime: Map<number, number>;
   records: MeasureRecord[];
 }
@@ -44,10 +45,10 @@ export class Measure {
     });
   }
 
-  public addRecord(speed: number, time: number) {
+  public addRecord(speed: number, time: string) {
     const record: MeasureRecord = {
       speed: speed,
-      time: time,
+      time: parseToTime(time),
       index: this.records.length,
     };
 
@@ -85,12 +86,19 @@ export class Measure {
 
   public parseResult(configRow: MeasureConfig): MeasureResult {
     const speedTime = new Map<number, number>([]);
+    let startTime = 0;
 
     for (let i = configRow.start; i <= configRow.end; i += 10) {
-      speedTime.set(
-        i,
-        this.findSpeed(i === 0 ? this.ZERO_SPEED : i, configRow.records),
+      const time = this.findTimeForSpeed(
+        i === 0 ? this.ZERO_SPEED : i,
+        configRow.records,
       );
+
+      if (i === configRow.start) {
+        startTime = time;
+      }
+
+      speedTime.set(i, time - startTime);
     }
 
     return {
@@ -100,13 +108,12 @@ export class Measure {
         ((speedTime.get(configRow.end) || 0) -
           (speedTime.get(configRow.start) || 0)) /
         100,
-      startTime: speedTime.get(configRow.start) || 0,
       speedTime,
       records: configRow.records,
     };
   }
 
-  public findSpeed(speed: number, records: MeasureRecord[]) {
+  public findTimeForSpeed(speed: number, records: MeasureRecord[]) {
     let interpolateResult = 0;
     let foundRecord;
 
