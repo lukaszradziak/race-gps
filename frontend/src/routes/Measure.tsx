@@ -3,7 +3,7 @@ import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { useMeasure } from "../hooks/useMeasure.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { MeasureResult } from "../classes/measure.ts";
-import { downloadFile } from "../utils/utils.ts";
+import { downloadFile } from "../utils/file.ts";
 import { TestMode } from "../components/TestMode.tsx";
 import { Card } from "../components/Card.tsx";
 import { Button } from "../components/Button.tsx";
