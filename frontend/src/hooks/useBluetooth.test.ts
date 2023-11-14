@@ -14,14 +14,14 @@ describe("useBluetooth", () => {
         handleData: (event: Event) => void,
         handleLog: (data: string) => void,
       ) => {
-        handleData(new Event("Start data"));
+        handleData(new Event("Start sample-data"));
         handleLog("Start log");
       },
       onStopButtonClick: (
         handleData: (event: Event) => void,
         handleLog: (data: string) => void,
       ) => {
-        handleData(new Event("Stop data"));
+        handleData(new Event("Stop sample-data"));
         handleLog("Stop log");
       },
     };
@@ -43,13 +43,13 @@ describe("useBluetooth", () => {
     });
 
     expect(result.current.log).toBe("Start log");
-    expect(handleDataResult).toEqual("Start data");
+    expect(handleDataResult).toEqual("Start sample-data");
 
     act(() => {
       result.current.disconnect();
     });
 
     expect(result.current.log).toBe("Stop log");
-    expect(handleDataResult).toEqual("Stop data");
+    expect(handleDataResult).toEqual("Stop sample-data");
   });
 });

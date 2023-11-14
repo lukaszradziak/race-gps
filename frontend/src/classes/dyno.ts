@@ -1,4 +1,4 @@
-import { averageValues } from "../utils/number.ts";
+import { averageValues, parseToTime } from "../utils/number.ts";
 
 enum DynoRecordStatus {
   Power = "power",
@@ -66,7 +66,7 @@ export class Dyno {
 
   public addRecord(
     speed: number,
-    time: number,
+    time: string,
     alt?: number,
     satellites?: number,
   ): void {
@@ -74,7 +74,7 @@ export class Dyno {
 
     this.records.push({
       speed,
-      time,
+      time: parseToTime(time),
       alt,
       satellites,
       increment: Math.floor(previousRecord?.speed) <= Math.floor(speed),
@@ -108,10 +108,15 @@ export class Dyno {
       const record = records[recordIndex];
       const previousRecord = records[parseInt(recordIndex) - 1];
 
+      record.measureTime = (record.time - (previousRecord?.time || 0)) / 100;
+
+      if (record.measureTime === 0) {
+        continue;
+      }
+
       record.engineSpeed = (record.speed * 3000) / this.speedOn3000rpm;
       record.speedMs = record.speed * 0.277777778;
       record.ek = (this.weight * Math.pow(record.speedMs, 2)) / 2;
-      record.measureTime = (record.time - (previousRecord?.time || 0)) / 100;
       record.deltaEk =
         (record.ek - (previousRecord?.ek || 0)) / record.measureTime;
       record.powerKw = record.deltaEk / 1000;
