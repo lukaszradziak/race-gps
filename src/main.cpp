@@ -6,6 +6,7 @@
 #include <BLE2902.h>
 #include <SoftwareSerial.h>
 #include "board_config.cpp"
+#include "HardwareSerial.h"
 
 #define SERVICE_UUID "65316b7c-b605-45b4-be6d-b02473b0d29a"
 #define CHARACTERISTIC_UUID "c8ad396d-8006-488d-beed-3a55c4b5ccae"
@@ -35,7 +36,7 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
 TinyGPSPlus gps;
-SoftwareSerial ss(GPS_TX, GPS_RX);
+HardwareSerial hs(2);
 byte data[9];
 int lastTime = 0;
 
@@ -59,35 +60,37 @@ void setup()
     Serial.println();
 
     Serial.println("GPS: setup in progress...");
-    ss.begin(GPS_BAUD_DEF);
+    hs.begin(GPS_BAUD_DEF, SERIAL_8N1, GPS_TX, GPS_RX);
     delay(500);
 
-    ss.write(gps_setup_GPDTM_off, sizeof(gps_setup_GPDTM_off));
+    // hs.write(gps_setup_reset_to_manufacturer_defaults, sizeof(gps_setup_reset_to_manufacturer_defaults));
+    // delay(100);
+    hs.write(gps_setup_GPDTM_off, sizeof(gps_setup_GPDTM_off));
     delay(100);
-    ss.write(gps_setup_GPGBS_off, sizeof(gps_setup_GPGBS_off));
+    hs.write(gps_setup_GPGBS_off, sizeof(gps_setup_GPGBS_off));
     delay(100);
-    ss.write(gps_setup_GPGLL_off, sizeof(gps_setup_GPGLL_off));
+    hs.write(gps_setup_GPGLL_off, sizeof(gps_setup_GPGLL_off));
     delay(100);
-    ss.write(gps_setup_GPGRS_off, sizeof(gps_setup_GPGRS_off));
+    hs.write(gps_setup_GPGRS_off, sizeof(gps_setup_GPGRS_off));
     delay(100);
-    ss.write(gps_setup_GPGSA_off, sizeof(gps_setup_GPGSA_off));
+    hs.write(gps_setup_GPGSA_off, sizeof(gps_setup_GPGSA_off));
     delay(100);
-    ss.write(gps_setup_GPGST_off, sizeof(gps_setup_GPGST_off));
+    hs.write(gps_setup_GPGST_off, sizeof(gps_setup_GPGST_off));
     delay(100);
-    ss.write(gps_setup_GPGSV_off, sizeof(gps_setup_GPGSV_off));
+    hs.write(gps_setup_GPGSV_off, sizeof(gps_setup_GPGSV_off));
     delay(100);
-    ss.write(gps_setup_GPVTG_off, sizeof(gps_setup_GPVTG_off));
+    hs.write(gps_setup_GPVTG_off, sizeof(gps_setup_GPVTG_off));
     delay(100);
-    ss.write(gps_setup_GPZDA_off, sizeof(gps_setup_GPZDA_off));
+    hs.write(gps_setup_GPZDA_off, sizeof(gps_setup_GPZDA_off));
     delay(100);
-    ss.write(gps_setup_38400baud, sizeof(gps_setup_38400baud));
+    hs.write(gps_setup_10Hz, sizeof(gps_setup_10Hz));
     delay(100);
-    ss.write(gps_setup_10Hz, sizeof(gps_setup_10Hz));
-    delay(100);
+    hs.write(gps_setup_38400baud, sizeof(gps_setup_38400baud));
+    delay(500);
 
     Serial.println("GPS: setup is completed");
-    ss.end();
-    ss.begin(38400);
+    hs.end();
+    hs.begin(38400, SERIAL_8N1, GPS_TX, GPS_RX);
 
     BLEDevice::init("ESP32");
     pServer = BLEDevice::createServer();
@@ -112,17 +115,18 @@ void setup()
 void loop()
 {
 #if GPS_DEBUG
-    while (ss.available() > 0)
+    while (hs.available() > 0)
     {
-        int read = ss.read();
+        int read = hs.read();
         if (gps.encode(read))
         {
             Serial.printf(
-                "\n> satellites: %d, speed: %d, alt: %d, time: %d\n",
+                "\n> satellites: %d, speedupd: %d, alt: %d, time: %d, speed: %d\n",
                 gps.satellites.value(),
-                gps.speed.value(),
+                gps.speed.isUpdated() ? 1 : 0,
                 gps.altitude.value(),
-                gps.time.value());
+                gps.time.value(),
+                gps.speed.value());
         }
         else
         {
@@ -133,9 +137,9 @@ void loop()
 
     if (deviceConnected)
     {
-        while (ss.available() > 0)
+        while (hs.available() > 0)
         {
-            if (gps.encode(ss.read()))
+            if (gps.encode(hs.read()))
             {
                 uint32_t time = gps.time.value();
                 int satellites = gps.satellites.value();
