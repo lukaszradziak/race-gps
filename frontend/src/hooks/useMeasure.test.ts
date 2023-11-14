@@ -20,17 +20,17 @@ describe("useMeasure", () => {
     );
 
     act(() => {
-      result.current.addRecord(0, 200);
-      result.current.addRecord(10, 210);
-      result.current.addRecord(30, 220);
-      result.current.addRecord(40, 230);
-      result.current.addRecord(50, 240);
-      result.current.addRecord(60, 250);
-      result.current.addRecord(70, 260);
+      result.current.addRecord(0, "12000200");
+      result.current.addRecord(10, "12000210");
+      result.current.addRecord(30, "12000220");
+      result.current.addRecord(40, "12000230");
+      result.current.addRecord(50, "12000240");
+      result.current.addRecord(60, "12000250");
+      result.current.addRecord(70, "12000260");
     });
 
     expect(result.current.speed).toBe(70);
-    expect(result.current.time).toBe(260);
+    expect(result.current.time).toBe("12000260");
     expect(measureTimeResult).toBe(0.3);
 
     unmount();

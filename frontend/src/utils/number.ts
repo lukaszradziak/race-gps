@@ -1,9 +1,12 @@
-export function actualTime() {
-  return parseInt(
-    new Date().toLocaleTimeString().split(":").join("") +
-      "" +
-      (new Date().getMilliseconds() / 10).toFixed(0).padStart(2, "0"),
-  );
+export function actualTime(): string {
+  const hours = String(new Date().getHours()).padStart(2, "0");
+  const minutes = String(new Date().getMinutes()).padStart(2, "0");
+  const seconds = String(new Date().getSeconds()).padStart(2, "0");
+  const milliseconds = String(
+    Math.floor(new Date().getMilliseconds() / 10),
+  ).padStart(2, "0");
+
+  return hours + minutes + seconds + milliseconds;
 }
 
 export function averageValues(
@@ -21,4 +24,29 @@ export function averageValues(
       }, 0) /
     (offset * 2 + 1)
   );
+}
+
+export function parseToTime(value: string, previousValue?: string): number {
+  if (value.length !== 8) {
+    throw new Error(`Wrong value of time: "${value}"`);
+  }
+
+  const date = new Date();
+
+  date.setHours(
+    parseInt(value.slice(0, 2)),
+    parseInt(value.slice(2, 4)),
+    parseInt(value.slice(4, 6)),
+    parseInt(value.slice(6, 8)) * 10,
+  );
+
+  if (
+    previousValue &&
+    previousValue.slice(0, 2) === "23" &&
+    value.slice(0, 2) === "00"
+  ) {
+    date.setTime(date.getTime() + 86400000);
+  }
+
+  return date.getTime() / 10;
 }

@@ -7,7 +7,7 @@ import { Button } from "../components/Button.tsx";
 import { useEffect, useState } from "react";
 import { Info } from "../components/Info.tsx";
 import { Dyno as DynoClass } from "../classes/dyno.ts";
-import { downloadFile } from "../utils/utils.ts";
+import { downloadFile } from "../utils/file.ts";
 import { useDebounce } from "react-use";
 import Highcharts from "highcharts";
 
@@ -123,7 +123,7 @@ export function Dyno() {
     [speed],
   );
 
-  const handleTestSpeed = (speed: number, time: number) => {
+  const handleTestSpeed = (speed: number, time: string) => {
     setSpeed(speed);
     dyno.addRecord(speed, time);
   };

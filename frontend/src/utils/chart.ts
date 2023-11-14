@@ -1,6 +1,10 @@
 import Highcharts from "highcharts";
 
-export function makeChart(elementId: string, series: object): void {
+export function makeChart(
+  elementId: string,
+  series: object,
+  yAxis: object,
+): void {
   setTimeout(() => {
     // TODO: setTimeout to remove and fix problem bottom
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -9,9 +13,7 @@ export function makeChart(elementId: string, series: object): void {
       title: {
         text: null,
       },
-      yAxis: {
-        title: false,
-      },
+      yAxis,
       xAxis: {
         title: false,
         labels: {
