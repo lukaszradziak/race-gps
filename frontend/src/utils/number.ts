@@ -50,3 +50,25 @@ export function parseToTime(value: string, previousValue?: string): number {
 
   return date.getTime() / 10;
 }
+
+export function weightedAverageValues(
+  values: number[],
+  index: number,
+  matrix = [
+    { idx: -2, w: 0.4 },
+    { idx: -1, w: 0.6 },
+    { idx: 0, w: 1 },
+    { idx: 1, w: 0.6 },
+    { idx: 2, w: 0.4 }
+  ]
+) {
+  let pointsSum = 0;
+  let pointsDiv = 0;
+  matrix.forEach(avgPoint => {
+    if (index + avgPoint.idx >= 0 && index + avgPoint.idx < values.length) {
+      pointsSum += values[index + avgPoint.idx] * avgPoint.w;
+      pointsDiv += avgPoint.w;
+    }
+  });
+  return pointsSum / (pointsDiv > 0 ? pointsDiv : 1);
+}
