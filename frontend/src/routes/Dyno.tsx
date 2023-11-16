@@ -44,13 +44,19 @@ const chartOptions: any = {
     },
   ],
   tooltip: {
-    formatter: function () {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatter: function (): any {
       return '<table>' +
-        '<tr><td>Engine:</td><td>' + this.x.toFixed(0) + ' rpm</td></tr>' +
-        '<tr><td>Speed:</td><td>' + this.points[4].y.toFixed(0) + ' km/h</td></tr>' +
-        '<tr><td>Power:</td><td><b>' + this.points[0].y.toFixed(0) + ' HP</b></td></tr>' +
-        '<tr><td>Torque:</td><td><b>' + this.points[1].y.toFixed(0) + ' Nm</b></td></tr>' +
-        '<tr><td>Loss:</td><td>' + this.points[3].y.toFixed(0) + ' HP</td></tr></table>';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Engine:</td><td>' + (this as any).x.toFixed(0) + ' rpm</td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Speed:</td><td>' + (this as any).points[4].y.toFixed(0) + ' km/h</td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Power:</td><td><b>' + (this as any).points[0].y.toFixed(0) + ' HP</b></td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Torque:</td><td><b>' + (this as any).points[1].y.toFixed(0) + ' Nm</b></td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Loss:</td><td>' + (this as any).points[3].y.toFixed(0) + ' HP</td></tr></table>';
     },
     shared: true,
     useHTML: true,
