@@ -129,11 +129,11 @@ export function Dyno() {
         return;
       }
 
-      let powerData = records.map((record) => [record.engineSpeed, record.powerKmAvg2]);
-      let torqueData = records.map((record) => [record.engineSpeed, record.torqueAvg2]);
+      const powerData = records.map((record) => [record.engineSpeed, record.powerKmAvg2]);
+      const torqueData = records.map((record) => [record.engineSpeed, record.torqueAvg2]);
       // Find elements in array with max HP and Nm
-      let maxHPPoint = powerData.reduce((a, e) => a[1] >= e[1] ? a : e);
-      let maxNmPoint = torqueData.reduce((a, e) => a[1] >= e[1] ? a : e);
+      const maxHPPoint = powerData.reduce((a, e) => a[1] >= e[1] ? a : e);
+      const maxNmPoint = torqueData.reduce((a, e) => a[1] >= e[1] ? a : e);
 
       chart.series[0].setData(powerData);
       chart.series[1].setData(torqueData);
