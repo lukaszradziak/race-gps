@@ -23,22 +23,45 @@ const chartOptions: any = {
   },
   xAxis: {
     categories: [],
+    gridLineWidth: 1,
+    tickInterval: 500,
   },
   yAxis: [
     {
       title: {
-        text: "Torque (Nm)",
+        // text: "Torque (Nm)",
+        enabled: false,
       },
       min: 0,
     },
     {
       opposite: true,
       title: {
-        text: "Power (KM)",
+        //   text: "Power (KM)",
+        enabled: false,
       },
       min: 0,
     },
   ],
+  tooltip: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatter: function (): any {
+      return '<table>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Engine:</td><td>' + (this as any).x.toFixed(0) + ' rpm</td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Speed:</td><td>' + (this as any).points[4].y.toFixed(0) + ' km/h</td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Power:</td><td><b>' + (this as any).points[0].y.toFixed(0) + ' HP</b></td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Torque:</td><td><b>' + (this as any).points[1].y.toFixed(0) + ' Nm</b></td></tr>' +
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        '<tr><td>Loss:</td><td>' + (this as any).points[3].y.toFixed(0) + ' HP</td></tr></table>';
+    },
+    shared: true,
+    useHTML: true,
+    valueDecimals: 2
+  },
   series: [
     {
       name: "Power Avg (KM)",
@@ -68,6 +91,13 @@ const chartOptions: any = {
       data: [],
       color: "orange",
       opacity: 0.6,
+    },
+    {
+      name: "Speed (km/h)",
+      type: "line",
+      data: [],
+      color: "green",
+      opacity: 0.5,
     },
   ],
   plotOptions: {
@@ -104,20 +134,27 @@ export function Dyno() {
         return;
       }
 
-      chart.series[0].setData(records.map((record) => record.powerKmAvg2));
-      chart.series[1].setData(records.map((record) => record.torqueAvg2));
-      chart.series[2].setData(records.map((record) => record.powerKmWithLoss));
-      chart.series[3].setData(records.map((record) => record.lossKm));
-      chart.xAxis[0].update({
-        categories: records.map((record) =>
-          String(Math.floor(record.engineSpeed)),
-        ),
-      });
+      const powerData = records.map((record) => [record.engineSpeed, record.powerKmAvg2]);
+      const torqueData = records.map((record) => [record.engineSpeed, record.torqueAvg2]);
+
+      chart.series[0].setData(powerData);
+      chart.series[1].setData(torqueData);
+      chart.series[2].setData(records.map((record) => [record.engineSpeed, record.powerKmWithLoss]));
+      chart.series[3].setData(records.map((record) => [record.engineSpeed, record.lossKm]));
+      chart.series[4].setData(records.map((record) => [record.engineSpeed, record.speed]));
+
+      // Find elements in array with max HP and Nm
+      const maxHPPoint = powerData.reduce((a, e) => a[1] >= e[1] ? a : e);
+      const maxNmPoint = torqueData.reduce((a, e) => a[1] >= e[1] ? a : e);
+
+      // Make both HP and Nm axes the same scale
+      chart.yAxis[0].setExtremes(0, Math.max(maxHPPoint[1], maxNmPoint[1]));
+      chart.yAxis[1].setExtremes(0, Math.max(maxHPPoint[1], maxNmPoint[1]));
+
       chart.setTitle({
-        text: `${Math.floor(chart.series[0].dataMax || 0)} KM / ${Math.floor(
-          chart.series[1].dataMax || 0,
-        )} Nm`,
+        text: `${maxHPPoint[1].toFixed(0)} HP @ ${maxHPPoint[0].toFixed(0)}<br/>${maxNmPoint[1].toFixed(0)} Nm @ ${maxNmPoint[0].toFixed(0)}`,
       });
+
     },
     100,
     [speed],
@@ -141,8 +178,8 @@ export function Dyno() {
 
     downloadFile(
       Object.keys(records[0]).join(",") +
-        "\n" +
-        records.map((data) => Object.values(data).join(",")).join("\n"),
+      "\n" +
+      records.map((data) => Object.values(data).join(",")).join("\n"),
       `race-gps-dyno-data-${Date.now()}.csv`,
     );
   };
