@@ -139,7 +139,7 @@ export class Dyno {
     }
 
     records.forEach((_record, index) => {
-      let avgMatrix = [
+      const avgMatrix = [
         { idx: -4, w: 0.2 },
         { idx: -3, w: 0.4 },
         { idx: -2, w: 0.8 },
