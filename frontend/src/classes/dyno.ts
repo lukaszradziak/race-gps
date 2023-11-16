@@ -1,4 +1,4 @@
-import { averageValues, weightedAverageValues, parseToTime } from "../utils/number.ts";
+import { weightedAverageValues, parseToTime } from "../utils/number.ts";
 
 enum DynoRecordStatus {
   Power = "power",
