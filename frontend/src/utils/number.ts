@@ -27,9 +27,10 @@ export function averageValues(
 }
 
 export function parseToTime(value: string, previousValue?: string): number {
-  if (value.length !== 8) {
+  if (value.length > 8) {
     throw new Error(`Wrong value of time: "${value}"`);
   }
+  value = String(value).padStart(8, '0');
 
   const date = new Date();
 

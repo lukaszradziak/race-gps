@@ -17,6 +17,7 @@ const dyno = new DynoClass();
 const chartOptions: any = {
   chart: {
     renderTo: "chart",
+    spacing: [10, 0, 15, 0],
   },
   title: {
     text: undefined,
@@ -26,23 +27,17 @@ const chartOptions: any = {
     gridLineWidth: 1,
     tickInterval: 500,
   },
-  yAxis: [
-    {
-      title: {
-        // text: "Torque (Nm)",
-        enabled: false,
-      },
-      min: 0,
+  yAxis: [{
+    title: {
+      text: undefined,
     },
-    {
-      opposite: true,
-      title: {
-        //   text: "Power (KM)",
-        enabled: false,
-      },
-      min: 0,
+    labels: {
+      distance: 5,
     },
-  ],
+    min: 0,
+    minorTicks: true,
+    minorTicksPerMajor: 2,
+  }],
   tooltip: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formatter: function (): any {
@@ -71,7 +66,7 @@ const chartOptions: any = {
       opacity: 1,
     },
     {
-      yAxis: 1,
+      // yAxis: 1,
       name: "Torque Avg (Nm)",
       type: "line",
       data: [],
@@ -134,8 +129,11 @@ export function Dyno() {
         return;
       }
 
-      const powerData = records.map((record) => [record.engineSpeed, record.powerKmAvg2]);
-      const torqueData = records.map((record) => [record.engineSpeed, record.torqueAvg2]);
+      let powerData = records.map((record) => [record.engineSpeed, record.powerKmAvg2]);
+      let torqueData = records.map((record) => [record.engineSpeed, record.torqueAvg2]);
+      // Find elements in array with max HP and Nm
+      let maxHPPoint = powerData.reduce((a, e) => a[1] >= e[1] ? a : e);
+      let maxNmPoint = torqueData.reduce((a, e) => a[1] >= e[1] ? a : e);
 
       chart.series[0].setData(powerData);
       chart.series[1].setData(torqueData);
@@ -143,13 +141,9 @@ export function Dyno() {
       chart.series[3].setData(records.map((record) => [record.engineSpeed, record.lossKm]));
       chart.series[4].setData(records.map((record) => [record.engineSpeed, record.speed]));
 
-      // Find elements in array with max HP and Nm
-      const maxHPPoint = powerData.reduce((a, e) => a[1] >= e[1] ? a : e);
-      const maxNmPoint = torqueData.reduce((a, e) => a[1] >= e[1] ? a : e);
-
-      // Make both HP and Nm axes the same scale
-      chart.yAxis[0].setExtremes(0, Math.max(maxHPPoint[1], maxNmPoint[1]));
-      chart.yAxis[1].setExtremes(0, Math.max(maxHPPoint[1], maxNmPoint[1]));
+      chart.yAxis[0].update({
+        max: Math.max(maxHPPoint[1], maxNmPoint[1]),
+      });
 
       chart.setTitle({
         text: `${maxHPPoint[1].toFixed(0)} HP @ ${maxHPPoint[0].toFixed(0)}<br/>${maxNmPoint[1].toFixed(0)} Nm @ ${maxNmPoint[0].toFixed(0)}`,
