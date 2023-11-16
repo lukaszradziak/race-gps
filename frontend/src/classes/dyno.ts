@@ -1,4 +1,4 @@
-import { averageValues, parseToTime } from "../utils/number.ts";
+import { averageValues, weightedAverageValues, parseToTime } from "../utils/number.ts";
 
 enum DynoRecordStatus {
   Power = "power",
@@ -46,7 +46,7 @@ export class Dyno {
   private testWheelLoss: number = 0;
   private airDensity: number = 0;
 
-  public constructor(private minimumRecordsToMeasure: number = 20) {}
+  public constructor(private minimumRecordsToMeasure: number = 20) { }
 
   public setConfig(
     weight: number,
@@ -142,32 +142,33 @@ export class Dyno {
       records[index].powerKmAvg = averageValues(
         records.map((record) => record.powerKmWithLoss),
         index,
-        8,
+        3,
       );
 
       records[index].torqueAvg = averageValues(
         records.map((record) => record.torqueWithLoss),
         index,
-        8,
+        3,
       );
     });
 
     records.forEach((_record, index) => {
-      records[index].powerKmAvg2 =
-        (records[index - 2]?.powerKmAvg * 0.4 +
-          records[index - 1]?.powerKmAvg * 0.6 +
-          records[index]?.powerKmAvg +
-          records[index + 1]?.powerKmAvg * 0.6 +
-          records[index + 2]?.powerKmAvg * 0.4) /
-        3;
+      // let avgMatrix = [
+      //     { idx: -2, w: 0.4 },
+      //     { idx: -1, w: 0.6 },
+      //     { idx: 0, w: 1 },
+      //     { idx: 1, w: 0.6 },
+      //     { idx: 2, w: 0.4 }
+      // ];
+      records[index].powerKmAvg2 = weightedAverageValues(
+        records.map((record) => record.powerKmAvg),
+        index,
+      );
 
-      records[index].torqueAvg2 =
-        (records[index - 2]?.torqueAvg * 0.4 +
-          records[index - 1]?.torqueAvg * 0.6 +
-          records[index]?.torqueAvg +
-          records[index + 1]?.torqueAvg * 0.6 +
-          records[index + 2]?.torqueAvg * 0.4) /
-        3;
+      records[index].torqueAvg2 = weightedAverageValues(
+        records.map((record) => record.torqueAvg),
+        index,
+      );
     });
 
     return records.filter((record) => record.status === DynoRecordStatus.Power);
