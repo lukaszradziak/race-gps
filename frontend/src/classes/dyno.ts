@@ -46,7 +46,7 @@ export class Dyno {
   private testWheelLoss: number = 0;
   private airDensity: number = 0;
 
-  public constructor(private minimumRecordsToMeasure: number = 20) { }
+  public constructor(private minimumRecordsToMeasure: number = 20) {}
 
   public setConfig(
     weight: number,
@@ -54,7 +54,7 @@ export class Dyno {
     cx: number,
     frontalSurface: number,
     testWheelLoss: number,
-    airDensity: number,
+    airDensity: number
   ) {
     this.weight = weight;
     this.speedOn3000rpm = speedOn3000rpm;
@@ -68,7 +68,7 @@ export class Dyno {
     speed: number,
     time: string,
     alt?: number,
-    satellites?: number,
+    satellites?: number
   ): void {
     const previousRecord = this.records[this.records.length - 1];
 
@@ -140,26 +140,28 @@ export class Dyno {
 
     records.forEach((_record, index) => {
       const avgMatrix = [
-        { idx: -4, w: 0.2 },
-        { idx: -3, w: 0.4 },
+        { idx: -5, w: 0.2 },
+        { idx: -4, w: 0.4 },
+        { idx: -3, w: 0.6 },
         { idx: -2, w: 0.8 },
         { idx: -1, w: 1 },
         { idx: 0, w: 1 },
         { idx: 1, w: 1 },
         { idx: 2, w: 0.8 },
-        { idx: 3, w: 0.4 },
-        { idx: 4, w: 0.2 }
+        { idx: 3, w: 0.6 },
+        { idx: 4, w: 0.4 },
+        { idx: 5, w: 0.2 },
       ];
       records[index].powerKmAvg = weightedAverageValues(
         records.map((record) => record.powerKmWithLoss),
         index,
-        avgMatrix,
+        avgMatrix
       );
 
       records[index].torqueAvg = weightedAverageValues(
         records.map((record) => record.torqueWithLoss),
         index,
-        avgMatrix,
+        avgMatrix
       );
     });
 
@@ -173,12 +175,12 @@ export class Dyno {
       // ];
       records[index].powerKmAvg2 = weightedAverageValues(
         records.map((record) => record.powerKmAvg),
-        index,
+        index
       );
 
       records[index].torqueAvg2 = weightedAverageValues(
         records.map((record) => record.torqueAvg),
-        index,
+        index
       );
     });
 
@@ -187,7 +189,7 @@ export class Dyno {
 
   public getLossRecords(): DynoRecord[] {
     return this.records.filter(
-      (record) => record.status === DynoRecordStatus.Loss,
+      (record) => record.status === DynoRecordStatus.Loss
     );
   }
 
