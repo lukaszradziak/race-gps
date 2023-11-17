@@ -27,39 +27,53 @@ const chartOptions: any = {
     gridLineWidth: 1,
     tickInterval: 500,
   },
-  yAxis: [{
-    title: {
-      text: undefined,
+  yAxis: [
+    {
+      title: {
+        text: undefined,
+      },
+      labels: {
+        distance: 5,
+      },
+      min: 0,
+      minorTicks: true,
+      minorTicksPerMajor: 2,
     },
-    labels: {
-      distance: 5,
-    },
-    min: 0,
-    minorTicks: true,
-    minorTicksPerMajor: 2,
-  }],
+  ],
   tooltip: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formatter: function (): any {
-      return '<table>' +
+      return (
+        "<table>" +
+        "<tr><td>Engine:</td><td>" +
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        '<tr><td>Engine:</td><td>' + (this as any).x.toFixed(0) + ' rpm</td></tr>' +
+        (this as any).x.toFixed(0) +
+        " rpm</td></tr>" +
+        "<tr><td>Speed:</td><td>" +
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        '<tr><td>Speed:</td><td>' + (this as any).points[4].y.toFixed(0) + ' km/h</td></tr>' +
+        (this as any).points[4].y.toFixed(0) +
+        " km/h</td></tr>" +
+        "<tr><td>Power:</td><td><b>" +
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        '<tr><td>Power:</td><td><b>' + (this as any).points[0].y.toFixed(0) + ' HP</b></td></tr>' +
+        (this as any).points[0].y.toFixed(0) +
+        " HP</b></td></tr>" +
+        "<tr><td>Torque:</td><td><b>" +
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        '<tr><td>Torque:</td><td><b>' + (this as any).points[1].y.toFixed(0) + ' Nm</b></td></tr>' +
+        (this as any).points[1].y.toFixed(0) +
+        " Nm</b></td></tr>" +
+        "<tr><td>Loss:</td><td>" +
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        '<tr><td>Loss:</td><td>' + (this as any).points[3].y.toFixed(0) + ' HP</td></tr></table>';
+        (this as any).points[3].y.toFixed(0) +
+        " HP</td></tr></table>"
+      );
     },
     shared: true,
     useHTML: true,
-    valueDecimals: 2
+    valueDecimals: 2,
   },
   series: [
     {
-      name: "Power Avg (KM)",
+      name: "Power Avg (HP)",
       type: "line",
       data: [],
       color: "red",
@@ -76,14 +90,14 @@ const chartOptions: any = {
       lineWidth: 3,
     },
     {
-      name: "Power (KM)",
+      name: "Power (HP)",
       type: "line",
       data: [],
       color: "red",
       opacity: 0.1,
     },
     {
-      name: "Loss (KM)",
+      name: "Loss (HP)",
       type: "line",
       data: [],
       color: "orange",
@@ -117,7 +131,7 @@ export function Dyno() {
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
       const data: GpsData = parseGpsData(
-        (event.target as BluetoothRemoteGATTCharacteristic).value,
+        (event.target as BluetoothRemoteGATTCharacteristic).value
       );
       setSpeed(data.speed);
     },
@@ -131,29 +145,42 @@ export function Dyno() {
         return;
       }
 
-      const powerData = records.map((record) => [record.engineSpeed, record.powerKmAvg2]);
-      const torqueData = records.map((record) => [record.engineSpeed, record.torqueAvg2]);
+      const powerData = records.map((record) => [
+        record.engineSpeed,
+        record.powerKmAvg2,
+      ]);
+      const torqueData = records.map((record) => [
+        record.engineSpeed,
+        record.torqueAvg2,
+      ]);
       // Find elements in array with max HP and Nm
-      const maxHPPoint = powerData.reduce((a, e) => a[1] >= e[1] ? a : e);
-      const maxNmPoint = torqueData.reduce((a, e) => a[1] >= e[1] ? a : e);
+      const maxHPPoint = powerData.reduce((a, e) => (a[1] >= e[1] ? a : e));
+      const maxNmPoint = torqueData.reduce((a, e) => (a[1] >= e[1] ? a : e));
 
       chart.series[0].setData(powerData);
       chart.series[1].setData(torqueData);
-      chart.series[2].setData(records.map((record) => [record.engineSpeed, record.powerKmWithLoss]));
-      chart.series[3].setData(records.map((record) => [record.engineSpeed, record.lossKm]));
-      chart.series[4].setData(records.map((record) => [record.engineSpeed, record.speed]));
+      chart.series[2].setData(
+        records.map((record) => [record.engineSpeed, record.powerKmWithLoss])
+      );
+      chart.series[3].setData(
+        records.map((record) => [record.engineSpeed, record.lossKm])
+      );
+      chart.series[4].setData(
+        records.map((record) => [record.engineSpeed, record.speed])
+      );
 
       chart.yAxis[0].update({
         max: Math.max(maxHPPoint[1], maxNmPoint[1]),
       });
 
       chart.setTitle({
-        text: `${maxHPPoint[1].toFixed(0)} HP @ ${maxHPPoint[0].toFixed(0)}<br/>${maxNmPoint[1].toFixed(0)} Nm @ ${maxNmPoint[0].toFixed(0)}`,
+        text: `${maxHPPoint[1].toFixed(0)} HP @ ${maxHPPoint[0].toFixed(
+          0
+        )}<br/>${maxNmPoint[1].toFixed(0)} Nm @ ${maxNmPoint[0].toFixed(0)}`,
       });
-
     },
     100,
-    [speed],
+    [speed]
   );
 
   const handleTestSpeed = (speed: number, time: string) => {
@@ -174,9 +201,9 @@ export function Dyno() {
 
     downloadFile(
       Object.keys(records[0]).join(",") +
-      "\n" +
-      records.map((data) => Object.values(data).join(",")).join("\n"),
-      `race-gps-dyno-data-${Date.now()}.csv`,
+        "\n" +
+        records.map((data) => Object.values(data).join(",")).join("\n"),
+      `race-gps-dyno-data-${Date.now()}.csv`
     );
   };
 
@@ -187,7 +214,7 @@ export function Dyno() {
       settings.cx,
       settings.frontalSurface,
       settings.testWheelLoss,
-      settings.airDensity,
+      settings.airDensity
     );
 
     if (!chart) {
