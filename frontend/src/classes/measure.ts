@@ -1,4 +1,4 @@
-import { parseToTime } from "../utils/number.ts";
+import { weightedAverageValues, parseToTime } from "../utils/number.ts";
 
 export interface MeasureRecord {
   speed: number;
@@ -7,6 +7,7 @@ export interface MeasureRecord {
   foundSpeed?: number;
   foundTime?: number;
   alt?: number;
+  altAvg?: number;
 }
 
 export interface MeasureConfig {
@@ -15,7 +16,6 @@ export interface MeasureConfig {
   ready: boolean;
   started: boolean;
   records: MeasureRecord[];
-  startIndex: number;
   measureTime?: number;
   speedTime?: Map<number, number>;
 }
@@ -23,6 +23,8 @@ export interface MeasureConfig {
 export interface MeasureResult {
   start: number;
   end: number;
+  startAlt: number;
+  startTime: number;
   measureTime: number;
   speedTime: Map<number, number>;
   records: MeasureRecord[];
@@ -33,7 +35,7 @@ export class Measure {
   private config: MeasureConfig[] = [];
   private records: MeasureRecord[] = [];
   private lastResult: MeasureResult = {} as MeasureResult;
-  private onNewResult: (result: MeasureResult) => void = () => {};
+  private onNewResult: (result: MeasureResult) => void = () => { };
 
   public addConfig(start: number, end: number) {
     this.config.push({
@@ -42,7 +44,6 @@ export class Measure {
       ready: false,
       started: false,
       records: [],
-      startIndex: 0,
     });
   }
 
@@ -57,10 +58,12 @@ export class Measure {
     for (const configRow of this.config) {
       if (configRow.start === 0 && speed <= configRow.start + 1) {
         configRow.ready = true;
+        configRow.records = [];
       }
 
       if (speed <= configRow.start) {
         configRow.ready = true;
+        configRow.records = [];
       }
 
       if (speed > configRow.end) {
@@ -69,9 +72,7 @@ export class Measure {
 
       if (!configRow.started && configRow.ready && speed > configRow.start) {
         configRow.started = true;
-        configRow.records = [
-          ...this.records.slice(this.records.length - 5, this.records.length),
-        ];
+        configRow.records = this.records.slice(-1);
         configRow.records.push({ ...record });
       } else if (configRow.started && speed > configRow.end) {
         configRow.started = false;
@@ -90,6 +91,30 @@ export class Measure {
     const speedTime = new Map<number, number>([]);
     let startTime = 0;
 
+    const avgMatrix = [
+      { idx: -4, w: 0.4 },
+      { idx: -3, w: 0.6 },
+      { idx: -2, w: 0.8 },
+      { idx: -1, w: 1 },
+      { idx: 0, w: 1 },
+      { idx: 1, w: 1 },
+      { idx: 2, w: 0.8 },
+      { idx: 3, w: 0.6 },
+      { idx: 4, w: 0.4 }
+    ];
+    configRow.records.forEach((_record, index) => {
+      configRow.records[index].altAvg = weightedAverageValues(
+        configRow.records.map((record) => record.alt),
+        index,
+        avgMatrix,
+      );
+    });
+
+    let startRecord = configRow.records.find(_record =>
+      _record.speed >= configRow.start
+    );
+    let startAlt = startRecord?.altAvg ?? 0;
+
     for (let i = configRow.start; i <= configRow.end; i += 10) {
       const time = this.findTimeForSpeed(
         i === 0 ? this.ZERO_SPEED : i,
@@ -103,9 +128,17 @@ export class Measure {
       speedTime.set(i, time - startTime);
     }
 
+    const firstFoundSpeedIndex = configRow.records.findIndex(
+      (record) =>
+        record.foundSpeed !== undefined && record.foundSpeed >= 0,
+    );
+    startTime = configRow.records[firstFoundSpeedIndex].foundTime ?? 0;
+
     return {
       start: configRow.start,
       end: configRow.end,
+      startAlt: startAlt,
+      startTime: startTime,
       measureTime:
         ((speedTime.get(configRow.end) || 0) -
           (speedTime.get(configRow.start) || 0)) /
@@ -132,7 +165,7 @@ export class Measure {
           actualRecord.time -
           ((actualRecord.time - previousRecord.time) *
             (actualRecord.speed - speed)) /
-            (actualRecord.speed - previousRecord.speed);
+          (actualRecord.speed - previousRecord.speed);
         foundRecord = actualRecord;
       }
     }
@@ -155,7 +188,7 @@ export class Measure {
   }
 
   public destroy() {
-    this.onNewResult = () => {};
+    this.onNewResult = () => { };
     this.config = [];
     this.records = [];
     this.lastResult = {} as MeasureResult;
