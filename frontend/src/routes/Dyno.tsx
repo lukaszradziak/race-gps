@@ -64,6 +64,7 @@ const chartOptions: any = {
       data: [],
       color: "red",
       opacity: 1,
+      lineWidth: 3,
     },
     {
       // yAxis: 1,
@@ -72,6 +73,7 @@ const chartOptions: any = {
       data: [],
       color: "blue",
       opacity: 1,
+      lineWidth: 3,
     },
     {
       name: "Power (KM)",

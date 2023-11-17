@@ -49,8 +49,8 @@ export function Measure() {
   const handleDownloadCsv = () => {
     downloadFile(
       Object.keys(csvData[0]).join(",") +
-        "\n" +
-        csvData.map((data) => Object.values(data).join(",")).join("\n"),
+      "\n" +
+      csvData.map((data) => Object.values(data).join(",")).join("\n"),
       `race-gps-raw-data-${Date.now()}.csv`,
     );
   };
@@ -152,16 +152,6 @@ export function Measure() {
           onClick={() => {
             setModalOpen(true);
             setModalMeasure(measure);
-
-            const firstFoundSpeedIndex = measure.records.findIndex(
-              (record) =>
-                record.foundSpeed !== undefined && record.foundSpeed >= 0,
-            );
-
-            const filteredRecords = measure.records.filter(
-              (_record, index) => index > firstFoundSpeedIndex,
-            );
-
             makeChart(
               "chart",
               [
@@ -169,47 +159,48 @@ export function Measure() {
                   showInLegend: false,
                   name: "Alt",
                   yAxis: 1,
-                  data: filteredRecords.map(
-                    (record) => (record.alt || 0) / 100,
+                  data: measure.records.map(
+                    (record) => [((record.time - measure.startTime) / 100).toFixed(2), (record.altAvg ?? 0 - measure.startAlt) / 100],
                   ),
                   opacity: 0.6,
                   color: "red",
+                  lineWidth: 3,
                 },
                 {
                   showInLegend: false,
                   name: "Speed",
-                  data: filteredRecords.map((record) => record.speed),
+                  data: measure.records.map(
+                    (record) => [((record.time - measure.startTime) / 100).toFixed(2), record.speed]
+                  ),
+                  lineWidth: 3,
                 },
               ],
               [
                 {
                   title: {
                     text: "Speed (km/h)",
+                    align: 'high',
+                    offset: -40,
+                    y: -20,
+                    rotation: 0,
                   },
-                  min: Math.min(
-                    ...filteredRecords.map((record) => record.speed),
-                  ),
-                  max: Math.max(
-                    ...filteredRecords.map((record) => record.speed),
-                  ),
+                  min: measure.start,
+                  max: measure.end,
                 },
                 {
                   opposite: true,
                   title: {
                     text: "Alt (m)",
+                    align: 'high',
+                    offset: 0,
+                    y: -20,
+                    rotation: 0,
                   },
-                  min: Math.min(
-                    ...filteredRecords.map(
-                      (record) => (record.alt || 0) / 100 - 4,
-                    ),
-                  ),
-                  max: Math.max(
-                    ...filteredRecords.map(
-                      (record) => (record.alt || 0) / 100 + 4,
-                    ),
-                  ),
+                  min: -16,
+                  max: 16,
                 },
               ],
+              (measure.measureTime + 0.04) * 2.5
             );
           }}
           className="cursor-pointer hover:bg-gray-50"
