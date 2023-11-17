@@ -160,7 +160,7 @@ export function Measure() {
                   name: "Alt",
                   yAxis: 1,
                   data: measure.records.map(
-                    (record) => [((record.time - measure.startTime) / 100).toFixed(2), (record.altAvg ?? 0 - measure.startAlt) / 100],
+                    (record) => [((record.time - measure.startTime) / 100).toFixed(2), ((record.altAvg ?? 0) - measure.startAlt) / 100],
                   ),
                   opacity: 0.6,
                   color: "red",
