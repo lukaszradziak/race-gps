@@ -1,4 +1,4 @@
-import { averageValues, weightedAverageValues, parseToTime } from "../utils/number.ts";
+import { weightedAverageValues, parseToTime } from "../utils/number.ts";
 
 enum DynoRecordStatus {
   Power = "power",
@@ -139,16 +139,27 @@ export class Dyno {
     }
 
     records.forEach((_record, index) => {
-      records[index].powerKmAvg = averageValues(
+      const avgMatrix = [
+        { idx: -4, w: 0.2 },
+        { idx: -3, w: 0.4 },
+        { idx: -2, w: 0.8 },
+        { idx: -1, w: 1 },
+        { idx: 0, w: 1 },
+        { idx: 1, w: 1 },
+        { idx: 2, w: 0.8 },
+        { idx: 3, w: 0.4 },
+        { idx: 4, w: 0.2 }
+      ];
+      records[index].powerKmAvg = weightedAverageValues(
         records.map((record) => record.powerKmWithLoss),
         index,
-        3,
+        avgMatrix,
       );
 
-      records[index].torqueAvg = averageValues(
+      records[index].torqueAvg = weightedAverageValues(
         records.map((record) => record.torqueWithLoss),
         index,
-        3,
+        avgMatrix,
       );
     });
 
