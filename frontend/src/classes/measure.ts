@@ -104,16 +104,16 @@ export class Measure {
     ];
     configRow.records.forEach((_record, index) => {
       configRow.records[index].altAvg = weightedAverageValues(
-        configRow.records.map((record) => record.alt),
+        configRow.records.map((record) => record.alt ?? 0),
         index,
         avgMatrix,
       );
     });
 
-    let startRecord = configRow.records.find(_record =>
+    const startRecord = configRow.records.find(_record =>
       _record.speed >= configRow.start
     );
-    let startAlt = startRecord?.altAvg ?? 0;
+    const startAlt = startRecord?.altAvg ?? 0;
 
     for (let i = configRow.start; i <= configRow.end; i += 10) {
       const time = this.findTimeForSpeed(
