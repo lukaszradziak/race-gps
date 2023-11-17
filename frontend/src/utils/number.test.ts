@@ -24,7 +24,7 @@ describe("averageValues", () => {
 
 describe("parseToTime", () => {
   test("test length validation", () => {
-    expect(() => parseToTime("100")).toThrowError('Wrong value of time: "100"');
+    expect(() => parseToTime("123456789")).toThrowError('Wrong value of time: "123456789"');
   });
 
   test("test time difference", () => {
