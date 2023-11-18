@@ -2,7 +2,6 @@ import Highcharts from "highcharts";
 
 export const dynoChart: Highcharts.Options = {
   chart: {
-    renderTo: "chart",
     spacing: [10, 0, 15, 0],
   },
   title: {

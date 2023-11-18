@@ -4,20 +4,21 @@ import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { Button } from "../components/Button.tsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Info } from "../components/Info.tsx";
 import { Dyno as DynoClass } from "../classes/dyno.ts";
 import { downloadFile } from "../utils/file.ts";
 import { useDebounce } from "react-use";
 import { dynoChart } from "../charts/dyno.chart.ts";
 import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
 
 const dyno = new DynoClass();
 
 export function Dyno() {
   const [speed, setSpeed] = useState(0);
   const [settings] = useSettingReducer();
-  const [chart, setChart] = useState<Highcharts.Chart>();
+  const chartComponentRef = useRef<HighchartsReact.RefObject>(null);
 
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
@@ -32,7 +33,7 @@ export function Dyno() {
     () => {
       const records = dyno.getPowerRecords();
 
-      if (!records.length || !chart) {
+      if (!records.length || !chartComponentRef.current?.chart) {
         return;
       }
 
@@ -47,6 +48,8 @@ export function Dyno() {
       // Find elements in array with max HP and Nm
       const maxHPPoint = powerData.reduce((a, e) => (a[1] >= e[1] ? a : e));
       const maxNmPoint = torqueData.reduce((a, e) => (a[1] >= e[1] ? a : e));
+
+      const chart = chartComponentRef.current.chart;
 
       chart.series[0].setData(powerData);
       chart.series[1].setData(torqueData);
@@ -107,11 +110,7 @@ export function Dyno() {
       settings.testWheelLoss,
       settings.airDensity,
     );
-
-    if (!chart) {
-      setChart(Highcharts.chart(dynoChart));
-    }
-  }, [chart, settings]);
+  }, [settings]);
 
   return (
     <>
@@ -134,7 +133,11 @@ export function Dyno() {
       </Card>
 
       <Card>
-        <div id="chart"></div>
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={dynoChart}
+          ref={chartComponentRef}
+        />
         <Button onClick={downloadDynoCSV}>Export CSV</Button>
       </Card>
 
