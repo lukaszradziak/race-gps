@@ -10,7 +10,9 @@ import { Button } from "../components/Button.tsx";
 import { Info } from "../components/Info.tsx";
 import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { Modal } from "../components/Modal.tsx";
-import { makeChart } from "../utils/chart.ts";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
+import { measureChart } from "../charts/measure.chart.ts";
 
 export function Measure() {
   const [settings] = useSettingReducer();
@@ -49,8 +51,8 @@ export function Measure() {
   const handleDownloadCsv = () => {
     downloadFile(
       Object.keys(csvData[0]).join(",") +
-      "\n" +
-      csvData.map((data) => Object.values(data).join(",")).join("\n"),
+        "\n" +
+        csvData.map((data) => Object.values(data).join(",")).join("\n"),
       `race-gps-raw-data-${Date.now()}.csv`,
     );
   };
@@ -152,56 +154,6 @@ export function Measure() {
           onClick={() => {
             setModalOpen(true);
             setModalMeasure(measure);
-            makeChart(
-              "chart",
-              [
-                {
-                  showInLegend: false,
-                  name: "Alt",
-                  yAxis: 1,
-                  data: measure.records.map(
-                    (record) => [((record.time - measure.startTime) / 100).toFixed(2), ((record.altAvg ?? 0) - measure.startAlt) / 100],
-                  ),
-                  opacity: 0.6,
-                  color: "red",
-                  lineWidth: 3,
-                },
-                {
-                  showInLegend: false,
-                  name: "Speed",
-                  data: measure.records.map(
-                    (record) => [((record.time - measure.startTime) / 100).toFixed(2), record.speed]
-                  ),
-                  lineWidth: 3,
-                },
-              ],
-              [
-                {
-                  title: {
-                    text: "Speed (km/h)",
-                    align: 'high',
-                    offset: -40,
-                    y: -20,
-                    rotation: 0,
-                  },
-                  min: measure.start,
-                  max: measure.end,
-                },
-                {
-                  opposite: true,
-                  title: {
-                    text: "Alt (m)",
-                    align: 'high',
-                    offset: 0,
-                    y: -20,
-                    rotation: 0,
-                  },
-                  min: -16,
-                  max: 16,
-                },
-              ],
-              (measure.measureTime + 0.04) * 2.5
-            );
           }}
           className="cursor-pointer hover:bg-gray-50"
         >
@@ -216,7 +168,26 @@ export function Measure() {
       <Modal open={modalOpen} setOpen={setModalOpen}>
         {modalMeasure ? (
           <>
-            <div id="chart" className="mb-4 -ml-6 -mr-6"></div>
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={measureChart}
+              callback={(chart: Highcharts.Chart) => {
+                chart.series[0].setData(
+                  modalMeasure.records.map((record) => [
+                    ((record.time - modalMeasure.startTime) / 100).toFixed(2),
+                    ((record.altAvg ?? 0) - modalMeasure.startAlt) / 100,
+                  ]),
+                );
+                chart.series[1].setData(
+                  modalMeasure.records.map((record) => [
+                    ((record.time - modalMeasure.startTime) / 100).toFixed(2),
+                    record.speed,
+                  ]),
+                );
+                chart.xAxis[0].options.tickInterval =
+                  (modalMeasure.measureTime + 0.04) * 2.5;
+              }}
+            />
             <div className="grid grid-cols-2 gap-x-6">
               {[...modalMeasure.speedTime]
                 .filter((speedTime) => speedTime[0] > modalMeasure.start)

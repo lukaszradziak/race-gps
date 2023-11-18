@@ -4,134 +4,26 @@ import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
 import { useBluetooth } from "../hooks/useBluetooth.ts";
 import { GpsData, parseGpsData } from "../utils/gps.ts";
 import { Button } from "../components/Button.tsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Info } from "../components/Info.tsx";
 import { Dyno as DynoClass } from "../classes/dyno.ts";
 import { downloadFile } from "../utils/file.ts";
 import { useDebounce } from "react-use";
+import { dynoChart } from "../charts/dyno.chart.ts";
 import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
 
 const dyno = new DynoClass();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const chartOptions: any = {
-  chart: {
-    renderTo: "chart",
-    spacing: [10, 0, 15, 0],
-  },
-  title: {
-    text: undefined,
-  },
-  xAxis: {
-    categories: [],
-    gridLineWidth: 1,
-    tickInterval: 500,
-  },
-  yAxis: [
-    {
-      title: {
-        text: undefined,
-      },
-      labels: {
-        distance: 5,
-      },
-      min: 0,
-      minorTicks: true,
-      minorTicksPerMajor: 2,
-    },
-  ],
-  tooltip: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatter: function (): any {
-      return (
-        "<table>" +
-        "<tr><td>Engine:</td><td>" +
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (this as any).x.toFixed(0) +
-        " rpm</td></tr>" +
-        "<tr><td>Speed:</td><td>" +
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (this as any).points[4].y.toFixed(0) +
-        " km/h</td></tr>" +
-        "<tr><td>Power:</td><td><b>" +
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (this as any).points[0].y.toFixed(0) +
-        " HP</b></td></tr>" +
-        "<tr><td>Torque:</td><td><b>" +
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (this as any).points[1].y.toFixed(0) +
-        " Nm</b></td></tr>" +
-        "<tr><td>Loss:</td><td>" +
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (this as any).points[3].y.toFixed(0) +
-        " HP</td></tr></table>"
-      );
-    },
-    shared: true,
-    useHTML: true,
-    valueDecimals: 2,
-  },
-  series: [
-    {
-      name: "Power Avg (HP)",
-      type: "line",
-      data: [],
-      color: "red",
-      opacity: 1,
-      lineWidth: 3,
-    },
-    {
-      // yAxis: 1,
-      name: "Torque Avg (Nm)",
-      type: "line",
-      data: [],
-      color: "blue",
-      opacity: 1,
-      lineWidth: 3,
-    },
-    {
-      name: "Power (HP)",
-      type: "line",
-      data: [],
-      color: "red",
-      opacity: 0.1,
-    },
-    {
-      name: "Loss (HP)",
-      type: "line",
-      data: [],
-      color: "orange",
-      opacity: 0.6,
-    },
-    {
-      name: "Speed (km/h)",
-      type: "line",
-      data: [],
-      color: "green",
-      opacity: 0.5,
-    },
-  ],
-  plotOptions: {
-    series: {
-      marker: {
-        enabled: false,
-      },
-    },
-  },
-  accessibility: {
-    enabled: false,
-  },
-};
 
 export function Dyno() {
   const [speed, setSpeed] = useState(0);
   const [settings] = useSettingReducer();
-  const [chart, setChart] = useState<Highcharts.Chart>();
+  const chartComponentRef = useRef<HighchartsReact.RefObject>(null);
 
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
       const data: GpsData = parseGpsData(
-        (event.target as BluetoothRemoteGATTCharacteristic).value
+        (event.target as BluetoothRemoteGATTCharacteristic).value,
       );
       setSpeed(data.speed);
     },
@@ -141,7 +33,7 @@ export function Dyno() {
     () => {
       const records = dyno.getPowerRecords();
 
-      if (!records.length || !chart) {
+      if (!records.length || !chartComponentRef.current?.chart) {
         return;
       }
 
@@ -157,16 +49,18 @@ export function Dyno() {
       const maxHPPoint = powerData.reduce((a, e) => (a[1] >= e[1] ? a : e));
       const maxNmPoint = torqueData.reduce((a, e) => (a[1] >= e[1] ? a : e));
 
+      const chart = chartComponentRef.current.chart;
+
       chart.series[0].setData(powerData);
       chart.series[1].setData(torqueData);
       chart.series[2].setData(
-        records.map((record) => [record.engineSpeed, record.powerKmWithLoss])
+        records.map((record) => [record.engineSpeed, record.powerKmWithLoss]),
       );
       chart.series[3].setData(
-        records.map((record) => [record.engineSpeed, record.lossKm])
+        records.map((record) => [record.engineSpeed, record.lossKm]),
       );
       chart.series[4].setData(
-        records.map((record) => [record.engineSpeed, record.speed])
+        records.map((record) => [record.engineSpeed, record.speed]),
       );
 
       chart.yAxis[0].update({
@@ -175,12 +69,12 @@ export function Dyno() {
 
       chart.setTitle({
         text: `${maxHPPoint[1].toFixed(0)} HP @ ${maxHPPoint[0].toFixed(
-          0
+          0,
         )}<br/>${maxNmPoint[1].toFixed(0)} Nm @ ${maxNmPoint[0].toFixed(0)}`,
       });
     },
     100,
-    [speed]
+    [speed],
   );
 
   const handleTestSpeed = (speed: number, time: string) => {
@@ -203,7 +97,7 @@ export function Dyno() {
       Object.keys(records[0]).join(",") +
         "\n" +
         records.map((data) => Object.values(data).join(",")).join("\n"),
-      `race-gps-dyno-data-${Date.now()}.csv`
+      `race-gps-dyno-data-${Date.now()}.csv`,
     );
   };
 
@@ -214,13 +108,9 @@ export function Dyno() {
       settings.cx,
       settings.frontalSurface,
       settings.testWheelLoss,
-      settings.airDensity
+      settings.airDensity,
     );
-
-    if (!chart) {
-      setChart(Highcharts.chart(chartOptions));
-    }
-  }, [chart, settings]);
+  }, [settings]);
 
   return (
     <>
@@ -243,7 +133,11 @@ export function Dyno() {
       </Card>
 
       <Card>
-        <div id="chart"></div>
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={dynoChart}
+          ref={chartComponentRef}
+        />
         <Button onClick={downloadDynoCSV}>Export CSV</Button>
       </Card>
 
