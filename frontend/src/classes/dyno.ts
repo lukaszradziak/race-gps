@@ -46,7 +46,7 @@ export class Dyno {
   private testWheelLoss: number = 0;
   private airDensity: number = 0;
 
-  public constructor(private minimumRecordsToMeasure: number = 20) {}
+  public constructor(private minimumRecordsToMeasure: number = 20) { }
 
   public setConfig(
     weight: number,
@@ -140,17 +140,25 @@ export class Dyno {
 
     records.forEach((_record, index) => {
       const avgMatrix = [
-        { idx: -5, w: 0.2 },
-        { idx: -4, w: 0.4 },
-        { idx: -3, w: 0.6 },
-        { idx: -2, w: 0.8 },
+        { idx: -9, w: 1 },
+        { idx: -8, w: 1 },
+        { idx: -7, w: 1 },
+        { idx: -6, w: 1 },
+        { idx: -5, w: 1 },
+        { idx: -4, w: 1 },
+        { idx: -3, w: 1 },
+        { idx: -2, w: 1 },
         { idx: -1, w: 1 },
         { idx: 0, w: 1 },
         { idx: 1, w: 1 },
-        { idx: 2, w: 0.8 },
-        { idx: 3, w: 0.6 },
-        { idx: 4, w: 0.4 },
-        { idx: 5, w: 0.2 },
+        { idx: 2, w: 1 },
+        { idx: 3, w: 1 },
+        { idx: 4, w: 1 },
+        { idx: 5, w: 1 },
+        { idx: 6, w: 1 },
+        { idx: 7, w: 1 },
+        { idx: 8, w: 1 },
+        { idx: 9, w: 1 },
       ];
       records[index].powerKmAvg = weightedAverageValues(
         records.map((record) => record.powerKmWithLoss),
@@ -166,21 +174,32 @@ export class Dyno {
     });
 
     records.forEach((_record, index) => {
-      // let avgMatrix = [
-      //     { idx: -2, w: 0.4 },
-      //     { idx: -1, w: 0.6 },
-      //     { idx: 0, w: 1 },
-      //     { idx: 1, w: 0.6 },
-      //     { idx: 2, w: 0.4 }
-      // ];
+      const avgMatrix = [
+        { idx: -6, w: 1 },
+        { idx: -5, w: 1 },
+        { idx: -4, w: 1 },
+        { idx: -3, w: 1 },
+        { idx: -2, w: 1 },
+        { idx: -1, w: 1 },
+        { idx: 0, w: 1 },
+        { idx: 1, w: 1 },
+        { idx: 2, w: 1 },
+        { idx: 3, w: 1 },
+        { idx: 4, w: 1 },
+        { idx: 5, w: 1 },
+        { idx: 6, w: 1 },
+      ];
+
       records[index].powerKmAvg2 = weightedAverageValues(
         records.map((record) => record.powerKmAvg),
-        index
+        index,
+        avgMatrix
       );
 
       records[index].torqueAvg2 = weightedAverageValues(
         records.map((record) => record.torqueAvg),
-        index
+        index,
+        avgMatrix
       );
     });
 
