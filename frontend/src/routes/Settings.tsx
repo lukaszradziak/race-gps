@@ -14,8 +14,8 @@ type FormValues = {
   speedOn3000rpm: number;
   cx: number;
   frontalSurface: number;
-  testWheelLoss: number;
-  testPowerFac: number;
+  wheelLoss: number;
+  powerFac: number;
   airDensity: number;
 };
 
@@ -169,22 +169,22 @@ export function Settings() {
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
             />
           </Row>
-          <Row label="Test wheel loss">
+          <Row label="Wheel loss factor">
             <input
               type="number"
               step="0.0001"
-              {...register(`testWheelLoss`, {
+              {...register(`wheelLoss`, {
                 required: true,
                 valueAsNumber: true,
               })}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"
             />
           </Row>
-          <Row label="Test power factor">
+          <Row label="Power correction factor">
             <input
               type="number"
               step="0.001"
-              {...register(`testPowerFac`, {
+              {...register(`powerFac`, {
                 required: true,
                 valueAsNumber: true,
               })}
