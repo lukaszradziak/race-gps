@@ -31,28 +31,20 @@ export function Dyno() {
 
   useDebounce(
     () => {
+      dyno.calculatePowerRecords();
       const records = dyno.getPowerRecords();
 
       if (!records.length || !chartComponentRef.current?.chart) {
         return;
       }
 
-      const powerData = records.map((record) => [
-        record.engineSpeed,
-        record.powerKmAvg2,
-      ]);
-      const torqueData = records.map((record) => [
-        record.engineSpeed,
-        record.torqueAvg2,
-      ]);
       // Find elements in array with max HP and Nm
-      const maxHPPoint = powerData.reduce((a, e) => (a[1] >= e[1] ? a : e));
-      const maxNmPoint = torqueData.reduce((a, e) => (a[1] >= e[1] ? a : e));
-
+      const maxHPPoint = dyno.getMaxPowerPoint();
+      const maxNmPoint = dyno.getMaxTorquePoint();
       const chart = chartComponentRef.current.chart;
 
-      chart.series[0].setData(powerData);
-      chart.series[1].setData(torqueData);
+      chart.series[0].setData(dyno.getPowerData());
+      chart.series[1].setData(dyno.getTorqueData());
       chart.series[2].setData(
         records.map((record) => [record.engineSpeed, record.powerKmWithLoss]),
       );
@@ -62,15 +54,15 @@ export function Dyno() {
       chart.series[4].setData(
         records.map((record) => [record.engineSpeed, record.speed]),
       );
-
       chart.yAxis[0].update({
-        max: Math.max(maxHPPoint[1], maxNmPoint[1]),
+        max: Math.max(maxHPPoint.value, maxNmPoint.value),
       });
-
       chart.setTitle({
-        text: `${maxHPPoint[1].toFixed(0)} HP @ ${maxHPPoint[0].toFixed(
+        text: `${maxHPPoint.value.toFixed(0)} HP @ ${maxHPPoint.rpm.toFixed(
           0,
-        )}<br/>${maxNmPoint[1].toFixed(0)} Nm @ ${maxNmPoint[0].toFixed(0)}`,
+        )}<br/>${maxNmPoint.value.toFixed(0)} Nm @ ${maxNmPoint.rpm.toFixed(
+          0,
+        )}`,
       });
     },
     100,

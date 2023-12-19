@@ -31,8 +31,14 @@ interface DynoRecord {
   torqueAvg2: number;
 }
 
+interface PointData {
+  rpm: number;
+  value: number;
+}
+
 export class Dyno {
   private records: DynoRecord[] = [];
+  private calculatedRecords: DynoRecord[] = [];
   private powerRecords: number = 0;
   private powerStarted: boolean = false;
   private powerEnded: boolean = false;
@@ -54,7 +60,7 @@ export class Dyno {
     cx: number,
     frontalSurface: number,
     testWheelLoss: number,
-    airDensity: number
+    airDensity: number,
   ) {
     this.weight = weight;
     this.speedOn3000rpm = speedOn3000rpm;
@@ -68,7 +74,7 @@ export class Dyno {
     speed: number,
     time: string,
     alt?: number,
-    satellites?: number
+    satellites?: number,
   ): void {
     const previousRecord = this.records[this.records.length - 1];
 
@@ -101,7 +107,7 @@ export class Dyno {
     this.parseRecords();
   }
 
-  public getPowerRecords(): DynoRecord[] {
+  public calculatePowerRecords(): void {
     const records: DynoRecord[] = [...this.records];
 
     for (const recordIndex in this.records) {
@@ -155,13 +161,13 @@ export class Dyno {
       records[index].powerKmAvg = weightedAverageValues(
         records.map((record) => record.powerKmWithLoss),
         index,
-        avgMatrix
+        avgMatrix,
       );
 
       records[index].torqueAvg = weightedAverageValues(
         records.map((record) => record.torqueWithLoss),
         index,
-        avgMatrix
+        avgMatrix,
       );
     });
 
@@ -175,21 +181,65 @@ export class Dyno {
       // ];
       records[index].powerKmAvg2 = weightedAverageValues(
         records.map((record) => record.powerKmAvg),
-        index
+        index,
       );
 
       records[index].torqueAvg2 = weightedAverageValues(
         records.map((record) => record.torqueAvg),
-        index
+        index,
       );
     });
 
-    return records.filter((record) => record.status === DynoRecordStatus.Power);
+    this.calculatedRecords = records.filter(
+      (record) => record.status === DynoRecordStatus.Power,
+    );
+  }
+
+  public getPowerRecords(): DynoRecord[] {
+    return this.calculatedRecords;
+  }
+
+  public getPowerData() {
+    return this.getPowerRecords().map((record) => [
+      record.engineSpeed,
+      record.powerKmAvg2,
+    ]);
+  }
+
+  public getTorqueData() {
+    return this.getPowerRecords().map((record) => [
+      record.engineSpeed,
+      record.torqueAvg2,
+    ]);
+  }
+
+  public getMaxPowerPoint(): PointData {
+    const maxPowerPoint = this.getPowerData().reduce(
+      (previousValue, currentValue) =>
+        previousValue[1] >= currentValue[1] ? previousValue : currentValue,
+    );
+
+    return {
+      rpm: maxPowerPoint[0],
+      value: maxPowerPoint[1],
+    };
+  }
+
+  public getMaxTorquePoint(): PointData {
+    const maxTorquePoint = this.getTorqueData().reduce(
+      (previousValue, currentValue) =>
+        previousValue[1] >= currentValue[1] ? previousValue : currentValue,
+    );
+
+    return {
+      rpm: maxTorquePoint[0],
+      value: maxTorquePoint[1],
+    };
   }
 
   public getLossRecords(): DynoRecord[] {
     return this.records.filter(
-      (record) => record.status === DynoRecordStatus.Loss
+      (record) => record.status === DynoRecordStatus.Loss,
     );
   }
 
