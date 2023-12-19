@@ -1,5 +1,5 @@
-time,speed,alt,satellites,weight,speedOn3000rpm,cx,frontalSurface,testWheelLoss,airDensity
-18341460,50.93,10380,10,1560,68,1,0.2,0.005,-1
+time,speed,alt,satellites,weight,speedOn3000rpm,cx,frontalSurface,wheelLoss,powerFac,airDensity
+18341460,50.93,10380,10,1560,68,0.28,2.15,0.0015,1.125,1.2
 18341470,51.04112,10380,10
 18341480,50.89296,10380,10
 18341490,51.05964,10380,10

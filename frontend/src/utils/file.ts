@@ -22,7 +22,8 @@ export interface DynoCsv {
   speedOn3000rpm?: string;
   cx?: string;
   frontalSurface?: string;
-  testWheelLoss?: string;
+  wheelLoss?: string;
+  powerFac?: string;
   airDensity?: string;
 }
 

@@ -27,7 +27,8 @@ interface DynoFileCustomSettings {
   speedOn3000rpm: number;
   cx: number;
   frontalSurface: number;
-  testWheelLoss: number;
+  wheelLoss: number;
+  powerFac: number;
   airDensity: number;
 }
 
@@ -104,7 +105,8 @@ export function DynoBrowser() {
           records[0].weight &&
           records[0].cx &&
           records[0].frontalSurface &&
-          records[0].testWheelLoss &&
+          records[0].wheelLoss &&
+          records[0].powerFac &&
           records[0].airDensity
         ) {
           customSettings = {
@@ -112,7 +114,8 @@ export function DynoBrowser() {
             weight: parseFloat(records[0].weight),
             cx: parseFloat(records[0].cx),
             frontalSurface: parseFloat(records[0].frontalSurface),
-            testWheelLoss: parseFloat(records[0].testWheelLoss),
+            wheelLoss: parseFloat(records[0].wheelLoss),
+            powerFac: parseFloat(records[0].powerFac),
             airDensity: parseFloat(records[0].airDensity),
           };
         }
@@ -144,7 +147,8 @@ export function DynoBrowser() {
           value.customSettings.speedOn3000rpm,
           value.customSettings.cx,
           value.customSettings.frontalSurface,
-          value.customSettings.testWheelLoss,
+          value.customSettings.wheelLoss,
+          value.customSettings.powerFac,
           value.customSettings.airDensity,
         );
       } else {
@@ -153,7 +157,8 @@ export function DynoBrowser() {
           settings.speedOn3000rpm,
           settings.cx,
           settings.frontalSurface,
-          settings.testWheelLoss,
+          settings.wheelLoss,
+          settings.powerFac,
           settings.airDensity,
         );
       }
@@ -189,7 +194,7 @@ export function DynoBrowser() {
       .filter(([, value]) => value.active)
       .forEach(([path, dataFile]) => {
         chart.addSeries({
-          name: `POWER KM (${basename(path)})`,
+          name: `POWER HP (${basename(path)})`,
           type: "line",
           data: dataFile.dyno.getPowerData(),
         });
