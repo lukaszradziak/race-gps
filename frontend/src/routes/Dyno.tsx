@@ -23,7 +23,7 @@ export function Dyno() {
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
       const data: GpsData = parseGpsData(
-        (event.target as BluetoothRemoteGATTCharacteristic).value,
+        (event.target as BluetoothRemoteGATTCharacteristic).value
       );
       setSpeed(data.speed);
     },
@@ -99,8 +99,9 @@ export function Dyno() {
       settings.speedOn3000rpm,
       settings.cx,
       settings.frontalSurface,
-      settings.testWheelLoss,
-      settings.airDensity,
+      settings.wheelLoss,
+      settings.powerFac,
+      settings.airDensity
     );
   }, [settings]);
 
