@@ -22,9 +22,19 @@ enum DynoFileType {
   Example = "example",
 }
 
+interface DynoFileCustomSettings {
+  weight: number;
+  speedOn3000rpm: number;
+  cx: number;
+  frontalSurface: number;
+  testWheelLoss: number;
+  airDensity: number;
+}
+
 interface DynoFile {
   type: DynoFileType;
   data: DynoCsv[];
+  customSettings?: DynoFileCustomSettings;
 }
 
 interface DynoDataFile extends DynoFile {
@@ -86,10 +96,31 @@ export function DynoBrowser() {
 
       for (const path in modules) {
         const data = (await modules[path]()) as CsvModule;
+        const records: DynoCsv[] = data.default;
+        let customSettings = undefined;
+
+        if (
+          records[0].speedOn3000rpm &&
+          records[0].weight &&
+          records[0].cx &&
+          records[0].frontalSurface &&
+          records[0].testWheelLoss &&
+          records[0].airDensity
+        ) {
+          customSettings = {
+            speedOn3000rpm: parseFloat(records[0].speedOn3000rpm),
+            weight: parseFloat(records[0].weight),
+            cx: parseFloat(records[0].cx),
+            frontalSurface: parseFloat(records[0].frontalSurface),
+            testWheelLoss: parseFloat(records[0].testWheelLoss),
+            airDensity: parseFloat(records[0].airDensity),
+          };
+        }
 
         tmpFiles.set(path, {
           type: DynoFileType.Example,
-          data: data.default as DynoCsv[],
+          data: records,
+          customSettings,
         });
       }
 
@@ -107,14 +138,25 @@ export function DynoBrowser() {
     files.forEach((value, key) => {
       const dyno = new Dyno();
 
-      dyno.setConfig(
-        settings.weight,
-        settings.speedOn3000rpm,
-        settings.cx,
-        settings.frontalSurface,
-        settings.testWheelLoss,
-        settings.airDensity,
-      );
+      if (value.customSettings) {
+        dyno.setConfig(
+          value.customSettings.weight,
+          value.customSettings.speedOn3000rpm,
+          value.customSettings.cx,
+          value.customSettings.frontalSurface,
+          value.customSettings.testWheelLoss,
+          value.customSettings.airDensity,
+        );
+      } else {
+        dyno.setConfig(
+          settings.weight,
+          settings.speedOn3000rpm,
+          settings.cx,
+          settings.frontalSurface,
+          settings.testWheelLoss,
+          settings.airDensity,
+        );
+      }
 
       value.data.forEach((data) => {
         dyno.addRecord(parseFloat(data.speed), data.time);
@@ -147,9 +189,15 @@ export function DynoBrowser() {
       .filter(([, value]) => value.active)
       .forEach(([path, dataFile]) => {
         chart.addSeries({
-          name: basename(path),
+          name: `POWER KM (${basename(path)})`,
+          type: "line",
+          data: dataFile.dyno.getPowerData(),
+        });
+        chart.addSeries({
+          name: `TORQUE Nm (${basename(path)})`,
           type: "line",
           data: dataFile.dyno.getTorqueData(),
+          visible: false,
         });
       });
   }, [dataFiles]);
