@@ -18,6 +18,12 @@ export interface DynoCsv {
   time: string;
   speed: string;
   alt: string;
+  weight?: string;
+  speedOn3000rpm?: string;
+  cx?: string;
+  frontalSurface?: string;
+  testWheelLoss?: string;
+  airDensity?: string;
 }
 
 export function parseDynoCsv(content: string): DynoCsv[] {
