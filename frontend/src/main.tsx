@@ -6,6 +6,7 @@ import { Measure } from "./routes/Measure.tsx";
 import { Root } from "./routes/Root.tsx";
 import { Dyno } from "./routes/Dyno.tsx";
 import "./styles/main.css";
+import { DynoBrowser } from "./routes/DynoBrowser.tsx";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       {
         path: "/dyno",
         element: <Dyno />,
+      },
+      {
+        path: "/dyno-browser",
+        element: <DynoBrowser />,
       },
       {
         path: "/settings",
