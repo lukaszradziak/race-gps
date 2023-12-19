@@ -8,7 +8,8 @@ interface ReducerState {
   speedOn3000rpm: number;
   cx: number;
   frontalSurface: number;
-  testWheelLoss: number;
+  wheelLoss: number;
+  powerFac: number;
   airDensity: number;
 }
 
@@ -29,8 +30,9 @@ const INITIAL_STATE: ReducerState = {
   speedOn3000rpm: 68,
   cx: 0.28,
   frontalSurface: 2.15,
-  testWheelLoss: 0.0026,
-  airDensity: 1.1225,
+  wheelLoss: 0.0015,
+  powerFac: 1.1,
+  airDensity: 1.2,
 };
 
 function reducer(state: ReducerState, action: ReducerActions): ReducerState {
@@ -46,7 +48,7 @@ function reducer(state: ReducerState, action: ReducerActions): ReducerState {
 
 const fillInitialValues = (
   savedState: ReducerState | undefined,
-  initialState: ReducerState,
+  initialState: ReducerState
 ) => {
   if (!savedState) {
     return initialState;
@@ -58,7 +60,7 @@ const fillInitialValues = (
 export const useSettingReducer = () => {
   const [savedState, saveState] = useLocalStorage(
     LOCAL_STORAGE_KEY,
-    INITIAL_STATE,
+    INITIAL_STATE
   );
 
   const reducerLocalStorage = useCallback(
@@ -69,11 +71,11 @@ export const useSettingReducer = () => {
 
       return newState;
     },
-    [saveState],
+    [saveState]
   );
 
   return useReducer(
     reducerLocalStorage,
-    fillInitialValues(savedState, INITIAL_STATE),
+    fillInitialValues(savedState, INITIAL_STATE)
   );
 };

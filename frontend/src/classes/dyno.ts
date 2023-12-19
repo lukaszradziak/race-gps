@@ -49,7 +49,8 @@ export class Dyno {
   private speedOn3000rpm: number = 0;
   private cx: number = 0;
   private frontalSurface: number = 0;
-  private testWheelLoss: number = 0;
+  private wheelLoss: number = 0;
+  private powerFac: number = 0;
   private airDensity: number = 0;
 
   public constructor(private minimumRecordsToMeasure: number = 20) {}
@@ -59,14 +60,16 @@ export class Dyno {
     speedOn3000rpm: number,
     cx: number,
     frontalSurface: number,
-    testWheelLoss: number,
-    airDensity: number,
+    wheelLoss: number,
+    powerFac: number,
+    airDensity: number
   ) {
     this.weight = weight;
     this.speedOn3000rpm = speedOn3000rpm;
     this.cx = cx;
     this.frontalSurface = frontalSurface;
-    this.testWheelLoss = testWheelLoss;
+    this.wheelLoss = wheelLoss;
+    this.powerFac = powerFac;
     this.airDensity = airDensity;
   }
 
@@ -126,10 +129,10 @@ export class Dyno {
       record.deltaEk =
         (record.ek - (previousRecord?.ek || 0)) / record.measureTime;
       record.powerKw = record.deltaEk / 1000;
-      record.powerKm = record.powerKw / 0.73549875;
+      record.powerKm = this.powerFac * record.powerKw * 1.359;
       record.torque = (9549.3 * previousRecord?.powerKw) / record.engineSpeed;
 
-      const wheelLossValue = this.testWheelLoss * Math.pow(record.speed, 2);
+      const wheelLossValue = this.wheelLoss * Math.pow(record.speed, 2);
       const airLoss =
         0.0005 *
         this.cx *
@@ -146,17 +149,25 @@ export class Dyno {
 
     records.forEach((_record, index) => {
       const avgMatrix = [
-        { idx: -5, w: 0.2 },
-        { idx: -4, w: 0.4 },
-        { idx: -3, w: 0.6 },
-        { idx: -2, w: 0.8 },
+        // { idx: -9, w: 1 },
+        { idx: -8, w: 1 },
+        { idx: -7, w: 1 },
+        { idx: -6, w: 1 },
+        { idx: -5, w: 1 },
+        { idx: -4, w: 1 },
+        { idx: -3, w: 1 },
+        { idx: -2, w: 1 },
         { idx: -1, w: 1 },
         { idx: 0, w: 1 },
         { idx: 1, w: 1 },
-        { idx: 2, w: 0.8 },
-        { idx: 3, w: 0.6 },
-        { idx: 4, w: 0.4 },
-        { idx: 5, w: 0.2 },
+        { idx: 2, w: 1 },
+        { idx: 3, w: 1 },
+        { idx: 4, w: 1 },
+        { idx: 5, w: 1 },
+        { idx: 6, w: 1 },
+        { idx: 7, w: 1 },
+        { idx: 8, w: 1 },
+        // { idx: 9, w: 1 },
       ];
       records[index].powerKmAvg = weightedAverageValues(
         records.map((record) => record.powerKmWithLoss),
@@ -172,21 +183,32 @@ export class Dyno {
     });
 
     records.forEach((_record, index) => {
-      // let avgMatrix = [
-      //     { idx: -2, w: 0.4 },
-      //     { idx: -1, w: 0.6 },
-      //     { idx: 0, w: 1 },
-      //     { idx: 1, w: 0.6 },
-      //     { idx: 2, w: 0.4 }
-      // ];
+      const avgMatrix = [
+        { idx: -6, w: 1 },
+        { idx: -5, w: 1 },
+        { idx: -4, w: 1 },
+        { idx: -3, w: 1 },
+        { idx: -2, w: 1 },
+        { idx: -1, w: 1 },
+        { idx: 0, w: 1 },
+        { idx: 1, w: 1 },
+        { idx: 2, w: 1 },
+        { idx: 3, w: 1 },
+        { idx: 4, w: 1 },
+        { idx: 5, w: 1 },
+        { idx: 6, w: 1 },
+      ];
+
       records[index].powerKmAvg2 = weightedAverageValues(
         records.map((record) => record.powerKmAvg),
         index,
+        avgMatrix
       );
 
       records[index].torqueAvg2 = weightedAverageValues(
         records.map((record) => record.torqueAvg),
         index,
+        avgMatrix
       );
     });
 
