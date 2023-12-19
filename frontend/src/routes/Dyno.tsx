@@ -107,8 +107,8 @@ export function Dyno() {
       settings.speedOn3000rpm,
       settings.cx,
       settings.frontalSurface,
-      settings.testWheelLoss,
-      settings.testPowerFac,
+      settings.wheelLoss,
+      settings.powerFac,
       settings.airDensity
     );
   }, [settings]);

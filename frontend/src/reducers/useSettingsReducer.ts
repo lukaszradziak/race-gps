@@ -8,8 +8,8 @@ interface ReducerState {
   speedOn3000rpm: number;
   cx: number;
   frontalSurface: number;
-  testWheelLoss: number;
-  testPowerFac: number;
+  wheelLoss: number;
+  powerFac: number;
   airDensity: number;
 }
 
@@ -30,8 +30,8 @@ const INITIAL_STATE: ReducerState = {
   speedOn3000rpm: 68,
   cx: 0.28,
   frontalSurface: 2.15,
-  testWheelLoss: 0.0015,
-  testPowerFac: 1.1,
+  wheelLoss: 0.0015,
+  powerFac: 1.1,
   airDensity: 1.2,
 };
 

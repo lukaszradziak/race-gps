@@ -43,8 +43,8 @@ export class Dyno {
   private speedOn3000rpm: number = 0;
   private cx: number = 0;
   private frontalSurface: number = 0;
-  private testWheelLoss: number = 0;
-  private testPowerFac: number = 0;
+  private wheelLoss: number = 0;
+  private powerFac: number = 0;
   private airDensity: number = 0;
 
   public constructor(private minimumRecordsToMeasure: number = 20) {}
@@ -54,16 +54,16 @@ export class Dyno {
     speedOn3000rpm: number,
     cx: number,
     frontalSurface: number,
-    testWheelLoss: number,
-    testPowerFac: number,
+    wheelLoss: number,
+    powerFac: number,
     airDensity: number
   ) {
     this.weight = weight;
     this.speedOn3000rpm = speedOn3000rpm;
     this.cx = cx;
     this.frontalSurface = frontalSurface;
-    this.testWheelLoss = testWheelLoss;
-    this.testPowerFac = testPowerFac;
+    this.wheelLoss = wheelLoss;
+    this.powerFac = powerFac;
     this.airDensity = airDensity;
   }
 
@@ -123,10 +123,10 @@ export class Dyno {
       record.deltaEk =
         (record.ek - (previousRecord?.ek || 0)) / record.measureTime;
       record.powerKw = record.deltaEk / 1000;
-      record.powerKm = this.testPowerFac * record.powerKw * 1.359;
+      record.powerKm = this.powerFac * record.powerKw * 1.359;
       record.torque = (9549.3 * previousRecord?.powerKw) / record.engineSpeed;
 
-      const wheelLossValue = this.testWheelLoss * Math.pow(record.speed, 2);
+      const wheelLossValue = this.wheelLoss * Math.pow(record.speed, 2);
       const airLoss =
         0.0005 *
         this.cx *
