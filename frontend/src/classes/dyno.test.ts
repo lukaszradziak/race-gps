@@ -38,6 +38,7 @@ describe("dyno", () => {
       dyno.addRecord(data[0], String(data[1]));
     }
 
+    dyno.calculatePowerRecords();
     expect(dyno.getPowerRecords().length).toBe(14);
     expect(dyno.getLossRecords().length).toBe(6);
   });
