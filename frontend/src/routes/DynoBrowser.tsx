@@ -190,21 +190,44 @@ export function DynoBrowser() {
       chart.series[0].remove(false);
     }
 
-    [...dataFiles]
-      .filter(([, value]) => value.active)
-      .forEach(([path, dataFile]) => {
-        chart.addSeries({
-          name: `POWER HP (${basename(path)})`,
-          type: "line",
-          data: dataFile.dyno.getPowerData(),
-        });
-        chart.addSeries({
-          name: `TORQUE Nm (${basename(path)})`,
-          type: "line",
-          data: dataFile.dyno.getTorqueData(),
-          visible: false,
-        });
+    const activeFiles = [...dataFiles].filter(([, value]) => value.active);
+
+    if (!activeFiles.length) {
+      return;
+    }
+
+    const maxPowerValue = Math.max(
+      ...activeFiles.map(
+        ([, dataFile]) => dataFile.dyno.getMaxPowerPoint().value,
+      ),
+    );
+    const maxValue = Math.floor(Math.ceil((maxPowerValue + 1) / 40) * 40);
+
+    chart.yAxis[0].update({
+      max: maxValue * 2,
+    });
+
+    chart.yAxis[1].update({
+      max: maxValue,
+    });
+
+    activeFiles.forEach(([path, dataFile]) => {
+      chart.addSeries({
+        name: `POWER HP (${basename(path)})`,
+        type: "line",
+        data: dataFile.dyno.getPowerData(),
+        yAxis: 1,
+        animation: false,
       });
+      chart.addSeries({
+        name: `TORQUE Nm (${basename(path)})`,
+        type: "line",
+        data: dataFile.dyno.getTorqueData(),
+        visible: false,
+        yAxis: 0,
+        animation: false,
+      });
+    });
   }, [dataFiles]);
 
   return (
