@@ -12,6 +12,7 @@ import { useDebounce } from "react-use";
 import { dynoChart } from "../charts/dyno.chart.ts";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import { Link } from "react-router-dom";
 
 const dyno = new DynoClass();
 
@@ -23,7 +24,7 @@ export function Dyno() {
   const { connect, disconnect, log, connected } = useBluetooth({
     handleData: (event: Event) => {
       const data: GpsData = parseGpsData(
-        (event.target as BluetoothRemoteGATTCharacteristic).value
+        (event.target as BluetoothRemoteGATTCharacteristic).value,
       );
       setSpeed(data.speed);
     },
@@ -101,12 +102,20 @@ export function Dyno() {
       settings.frontalSurface,
       settings.wheelLoss,
       settings.powerFac,
-      settings.airDensity
+      settings.airDensity,
     );
   }, [settings]);
 
   return (
     <>
+      <div className="flex justify-center pb-2">
+        <Link
+          to="/dyno-browser"
+          className="text-sm text-gray-900 hover:opacity-70"
+        >
+          Dyno browser
+        </Link>
+      </div>
       <Card title="Dyno">
         <div className="mt-1 text-4xl font-semibold tracking-tight text-gray-900 py-4 text-center">
           {Math.floor(speed)}
