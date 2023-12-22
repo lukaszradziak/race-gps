@@ -227,6 +227,14 @@ export function DynoBrowser() {
         yAxis: 0,
         animation: false,
       });
+      chart.addSeries({
+        name: `LOSS HP (${basename(path)})`,
+        type: "line",
+        data: dataFile.dyno.getLossData(),
+        visible: false,
+        yAxis: 1,
+        animation: false,
+      });
     });
   }, [dataFiles]);
 
@@ -309,18 +317,36 @@ export function DynoBrowser() {
                        pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
                     />
                   </Switch>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">
-                      {basename(path)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {dataFile.dyno.getMaxPowerPoint().value.toFixed(0)} HP @{" "}
-                      {dataFile.dyno.getMaxPowerPoint().rpm.toFixed(0)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {dataFile.dyno.getMaxTorquePoint().value.toFixed(0)} Nm @{" "}
-                      {dataFile.dyno.getMaxTorquePoint().rpm.toFixed(0)}
-                    </p>
+                  <div className="flex gap-5">
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-900">
+                        {basename(path)}
+                      </p>
+                      <div className="flex gap-5 text-gray-500 text-sm">
+                        <div>
+                          <p>
+                            {dataFile.dyno.getMaxPowerPoint().value.toFixed(0)}{" "}
+                            HP @{" "}
+                            {dataFile.dyno.getMaxPowerPoint().rpm.toFixed(0)}
+                          </p>
+                          <p>
+                            {dataFile.dyno.getMaxTorquePoint().value.toFixed(0)}{" "}
+                            Nm @{" "}
+                            {dataFile.dyno.getMaxTorquePoint().rpm.toFixed(0)}
+                          </p>
+                        </div>
+                        <div>
+                          <p>
+                            Power records:{" "}
+                            {dataFile.dyno.getPowerRecords().length}
+                          </p>
+                          <p>
+                            Loss records:{" "}
+                            {dataFile.dyno.getLossRecords().length}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </li>
               ))}
