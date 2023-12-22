@@ -62,7 +62,7 @@ export class Dyno {
     frontalSurface: number,
     wheelLoss: number,
     powerFac: number,
-    airDensity: number
+    airDensity: number,
   ) {
     this.weight = weight;
     this.speedOn3000rpm = speedOn3000rpm;
@@ -202,13 +202,13 @@ export class Dyno {
       records[index].powerKmAvg2 = weightedAverageValues(
         records.map((record) => record.powerKmAvg),
         index,
-        avgMatrix
+        avgMatrix,
       );
 
       records[index].torqueAvg2 = weightedAverageValues(
         records.map((record) => record.torqueAvg),
         index,
-        avgMatrix
+        avgMatrix,
       );
     });
 
@@ -232,6 +232,13 @@ export class Dyno {
     return this.getPowerRecords().map((record) => [
       record.engineSpeed,
       record.torqueAvg2,
+    ]);
+  }
+
+  public getLossData() {
+    return this.getLossRecords().map((record) => [
+      record.engineSpeed,
+      Math.abs(record.powerKmAvg2),
     ]);
   }
 

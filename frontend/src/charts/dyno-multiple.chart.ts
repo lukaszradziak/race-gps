@@ -48,6 +48,11 @@ export const dynoMultipleChart: Highcharts.Options = {
       marker: {
         enabled: false,
       },
+      states: {
+        inactive: {
+          opacity: 1,
+        },
+      },
     },
   },
   accessibility: {
