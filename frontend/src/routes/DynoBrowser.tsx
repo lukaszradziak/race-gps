@@ -63,9 +63,33 @@ export function DynoBrowser() {
     const tmpFiles = new Map<string, DynoFile>(files);
 
     readFiles.forEach((value, key) => {
+      const csvData = parseDynoCsv(value);
+      let customSettings = undefined;
+
+      if (
+        csvData[0].speedOn3000rpm &&
+        csvData[0].weight &&
+        csvData[0].cx &&
+        csvData[0].frontalSurface &&
+        csvData[0].wheelLoss &&
+        csvData[0].powerFac &&
+        csvData[0].airDensity
+      ) {
+        customSettings = {
+          speedOn3000rpm: parseFloat(csvData[0].speedOn3000rpm),
+          weight: parseFloat(csvData[0].weight),
+          cx: parseFloat(csvData[0].cx),
+          frontalSurface: parseFloat(csvData[0].frontalSurface),
+          wheelLoss: parseFloat(csvData[0].wheelLoss),
+          powerFac: parseFloat(csvData[0].powerFac),
+          airDensity: parseFloat(csvData[0].airDensity),
+        };
+      }
+
       tmpFiles.set(key, {
         type: DynoFileType.Uploaded,
-        data: parseDynoCsv(value),
+        data: csvData,
+        customSettings,
       });
     });
 
@@ -343,6 +367,16 @@ export function DynoBrowser() {
                           <p>
                             Loss records:{" "}
                             {dataFile.dyno.getLossRecords().length}
+                          </p>
+                        </div>
+                        <div>
+                          <p>Custom settings: </p>
+                          <p>
+                            {dataFile.customSettings
+                              ? Object.values(dataFile.customSettings).join(
+                                  ", ",
+                                )
+                              : "-"}
                           </p>
                         </div>
                       </div>
