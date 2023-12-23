@@ -38,12 +38,30 @@ export function parseDynoCsv(content: string): DynoCsv[] {
   const timeColumn = header.findIndex((value) => value === "time");
   const speedColumn = header.findIndex((value) => value === "speed");
   const altColumn = header.findIndex((value) => value === "alt");
+  const speedOn3000rpmColumn = header.findIndex(
+    (value) => value === "speedOn3000rpm",
+  );
+  const weightColumn = header.findIndex((value) => value === "weight");
+  const cxColumn = header.findIndex((value) => value === "cx");
+  const frontalSurfaceColumn = header.findIndex(
+    (value) => value === "frontalSurface",
+  );
+  const wheelLossColumn = header.findIndex((value) => value === "wheelLoss");
+  const powerFacColumn = header.findIndex((value) => value === "powerFac");
+  const airDensityColumn = header.findIndex((value) => value === "airDensity");
 
   return lines.map((line) => {
     return {
       time: line[timeColumn],
       speed: line[speedColumn],
       alt: line[altColumn] ?? 0,
+      speedOn3000rpm: line[speedOn3000rpmColumn] ?? undefined,
+      weight: line[weightColumn] ?? undefined,
+      cx: line[cxColumn] ?? undefined,
+      frontalSurface: line[frontalSurfaceColumn] ?? undefined,
+      wheelLoss: line[wheelLossColumn] ?? undefined,
+      powerFac: line[powerFacColumn] ?? undefined,
+      airDensity: line[airDensityColumn] ?? undefined,
     };
   });
 }
