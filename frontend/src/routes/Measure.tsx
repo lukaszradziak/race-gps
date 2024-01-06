@@ -80,7 +80,7 @@ export function Measure() {
     const csvData = getCsv();
 
     if (!csvData.length) {
-      // return;
+      return;
     }
 
     setApiLoading(true);
