@@ -48,7 +48,7 @@ export function Button({
       type={type}
       {...props}
       className={twMerge(
-        `inline-flex items-center rounded border border-transparent bg-green-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 justify-center`,
+        `inline-flex items-center rounded border border-transparent bg-green-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 justify-center disabled:opacity-60 disabled:cursor-not-allowed`,
         getVariant(variant),
         getSize(size),
         className,

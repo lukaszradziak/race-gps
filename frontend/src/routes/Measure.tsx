@@ -14,6 +14,10 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { measureChart } from "../charts/measure.chart.ts";
 
+function generateApiName() {
+  return new Date().toISOString().replace(/([:.])/g, "-");
+}
+
 export function Measure() {
   const [settings] = useSettingReducer();
   const [measureResult, setMeasureResult] = useState<MeasureResult[]>([]);
@@ -26,6 +30,10 @@ export function Measure() {
   const [csvData, setCsvData] = useState<GpsData[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMeasure, setModalMeasure] = useState<MeasureResult>();
+  // TODO: to external component
+  const [apiName] = useState<string>(generateApiName());
+  const [apiLoading, setApiLoading] = useState<boolean>(false);
+  const [apiInfo, setApiInfo] = useState<string>("");
 
   const { speed, time, addRecord } = useMeasure({
     speedConfig: settings.speed.map((speed) => [speed.start, speed.end]),
@@ -48,17 +56,48 @@ export function Measure() {
     },
   });
 
-  const handleDownloadCsv = () => {
-    downloadFile(
+  const getCsv = (): string => {
+    if (!csvData.length) {
+      return "";
+    }
+
+    return (
       Object.keys(csvData[0]).join(",") +
-        "\n" +
-        csvData.map((data) => Object.values(data).join(",")).join("\n"),
-      `race-gps-raw-data-${Date.now()}.csv`,
+      "\n" +
+      csvData.map((data) => Object.values(data).join(",")).join("\n")
     );
+  };
+
+  const handleDownloadCsv = () => {
+    downloadFile(getCsv(), `race-gps-raw-data-${Date.now()}.csv`);
   };
 
   const handleTestSpeed = (speed: number, time: string, alt?: number) => {
     addRecord(speed, time, alt);
+  };
+
+  const uploadToApi = async () => {
+    const csvData = getCsv();
+
+    if (!csvData.length) {
+      return;
+    }
+
+    setApiLoading(true);
+
+    await fetch(settings.apiUrl, {
+      method: "POST",
+      body: JSON.stringify({
+        name: apiName,
+        data: csvData,
+      }),
+    });
+
+    const response = await fetch(settings.apiUrl);
+    const json = await response.json();
+    setApiInfo(json.files.length);
+
+    setApiLoading(false);
   };
 
   return (
@@ -145,6 +184,17 @@ export function Measure() {
         </div>
         {log ? <Info>{log}</Info> : null}
       </Card>
+      {settings.apiEnabled ? (
+        <Button
+          className="mb-2"
+          variant="white"
+          onClick={uploadToApi}
+          disabled={apiLoading}
+        >
+          {apiLoading ? `Loading...` : `Sync with API`}{" "}
+          {apiInfo ? `(${apiInfo})` : null}
+        </Button>
+      ) : null}
       {settings.testMode ? (
         <TestMode value={speed} onChange={handleTestSpeed} />
       ) : null}
