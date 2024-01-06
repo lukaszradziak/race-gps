@@ -111,7 +111,6 @@ export function TestMode({
         </Button>
       </Card>
       <Modal open={apiModalOpen} setOpen={setApiModalOpen}>
-        select files
         {apiFiles.map((apiFile, index) => (
           <li key={index}>
             <a href="#" onClick={() => selectApiFile(apiFile)}>
