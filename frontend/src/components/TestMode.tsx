@@ -4,6 +4,7 @@ import { actualTime } from "../utils/number.ts";
 import { Modal } from "./Modal.tsx";
 import { Button } from "./Button.tsx";
 import { useSettingReducer } from "../reducers/useSettingsReducer.ts";
+import { downloadFile } from "../utils/file.ts";
 
 export function TestMode({
   value,
@@ -73,15 +74,19 @@ export function TestMode({
     setApiFiles(json.files);
   };
 
-  const selectApiFile = async (apiFile: string) => {
+  const selectApiFile = async (apiFile: string, download: boolean = false) => {
     setApiModalOpen(false);
 
     const response = await fetch(`${settings.apiUrl}/${apiFile}`);
     const json = await response.json();
 
-    parseCsv(json.file).forEach((row) => {
-      onChange(row.speed, row.time, row.alt);
-    });
+    if (download) {
+      downloadFile(json.file, `${apiFile}.csv`);
+    } else {
+      parseCsv(json.file).forEach((row) => {
+        onChange(row.speed, row.time, row.alt);
+      });
+    }
   };
 
   return (
@@ -115,6 +120,13 @@ export function TestMode({
           <li key={index}>
             <a href="#" onClick={() => selectApiFile(apiFile)}>
               {apiFile}
+            </a>
+            <a
+              href="#"
+              onClick={() => selectApiFile(apiFile, true)}
+              className="ml-1"
+            >
+              [D]
             </a>
           </li>
         ))}
