@@ -1,7 +1,7 @@
 import { useLocalStorage } from "react-use";
 import { useCallback, useReducer } from "react";
 
-interface ReducerState {
+export interface SettingsReducerState {
   speed: { start: number; end: number }[];
   testMode: boolean;
   weight: number;
@@ -11,14 +11,17 @@ interface ReducerState {
   wheelLoss: number;
   powerFac: number;
   airDensity: number;
+  apiEnabled: boolean;
+  apiAutomatic: boolean;
+  apiUrl: string;
 }
 
-type Save = { type: "save"; payload: ReducerState };
+type Save = { type: "save"; payload: SettingsReducerState };
 type Reset = { type: "reset" };
 type ReducerActions = Save | Reset;
 
 const LOCAL_STORAGE_KEY: string = "SETTINGS";
-const INITIAL_STATE: ReducerState = {
+const INITIAL_STATE: SettingsReducerState = {
   speed: [
     { start: 0, end: 60 },
     { start: 0, end: 100 },
@@ -33,9 +36,15 @@ const INITIAL_STATE: ReducerState = {
   wheelLoss: 0.0015,
   powerFac: 1.1,
   airDensity: 1.2,
+  apiEnabled: false,
+  apiAutomatic: false,
+  apiUrl: "",
 };
 
-function reducer(state: ReducerState, action: ReducerActions): ReducerState {
+function reducer(
+  state: SettingsReducerState,
+  action: ReducerActions,
+): SettingsReducerState {
   switch (action.type) {
     case "save":
       return action.payload;
@@ -47,8 +56,8 @@ function reducer(state: ReducerState, action: ReducerActions): ReducerState {
 }
 
 const fillInitialValues = (
-  savedState: ReducerState | undefined,
-  initialState: ReducerState
+  savedState: SettingsReducerState | undefined,
+  initialState: SettingsReducerState,
 ) => {
   if (!savedState) {
     return initialState;
@@ -60,22 +69,22 @@ const fillInitialValues = (
 export const useSettingReducer = () => {
   const [savedState, saveState] = useLocalStorage(
     LOCAL_STORAGE_KEY,
-    INITIAL_STATE
+    INITIAL_STATE,
   );
 
   const reducerLocalStorage = useCallback(
-    (state: ReducerState, action: ReducerActions) => {
+    (state: SettingsReducerState, action: ReducerActions) => {
       const newState = reducer(state, action);
 
       saveState(newState);
 
       return newState;
     },
-    [saveState]
+    [saveState],
   );
 
   return useReducer(
     reducerLocalStorage,
-    fillInitialValues(savedState, INITIAL_STATE)
+    fillInitialValues(savedState, INITIAL_STATE),
   );
 };
