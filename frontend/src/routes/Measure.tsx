@@ -111,7 +111,7 @@ export function Measure() {
       setApiLastRecords(csvData.length);
       uploadToApi().then();
     },
-    settings.apiAutomatic ? 15 * 1000 : null,
+    settings.apiEnabled && settings.apiAutomatic ? 15 * 1000 : null,
   );
 
   return (

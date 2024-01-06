@@ -111,9 +111,11 @@ export function TestMode({
           onMouseDown={() => setStartTime(Date.now())}
         />
         <input type="file" onChange={handleFile} />
-        <Button onClick={openApiModal} variant="white">
-          Download from API
-        </Button>
+        {settings.apiEnabled ? (
+          <Button onClick={openApiModal} variant="white" className="mt-2">
+            Download from API
+          </Button>
+        ) : null}
       </Card>
       <Modal open={apiModalOpen} setOpen={setApiModalOpen}>
         {apiFiles.map((apiFile, index) => (
