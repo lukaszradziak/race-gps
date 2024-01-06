@@ -47,3 +47,8 @@ Then if you want to overwrite defualt GPS board pinout configuration edit suitab
 * `npm install`
 * `npm run dev`
 * Go to http://localhost:5173/
+
+## Storage API
+
+Mini app for synchronization data with API:
+https://github.com/lukaszradziak/storage-api
