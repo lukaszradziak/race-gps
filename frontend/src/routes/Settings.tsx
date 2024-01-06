@@ -137,6 +137,9 @@ export function Settings() {
           <FormRow label="Api enabled">
             <InputCheckbox {...register(`apiEnabled`)} />
           </FormRow>
+          <FormRow label="Api automatic">
+            <InputCheckbox {...register(`apiAutomatic`)} />
+          </FormRow>
           <FormRow label="Air url">
             <InputText
               {...register(`apiUrl`, {

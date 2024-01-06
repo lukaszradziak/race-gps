@@ -13,6 +13,7 @@ import { Modal } from "../components/Modal.tsx";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { measureChart } from "../charts/measure.chart.ts";
+import { useInterval } from "react-use";
 
 function generateApiName() {
   return new Date().toISOString().replace(/([:.])/g, "-");
@@ -34,6 +35,7 @@ export function Measure() {
   const [apiName] = useState<string>(generateApiName());
   const [apiLoading, setApiLoading] = useState<boolean>(false);
   const [apiInfo, setApiInfo] = useState<string>("");
+  const [apiLastRecords, setApiLastRecords] = useState<number>(0);
 
   const { speed, time, addRecord } = useMeasure({
     speedConfig: settings.speed.map((speed) => [speed.start, speed.end]),
@@ -99,6 +101,15 @@ export function Measure() {
 
     setApiLoading(false);
   };
+
+  useInterval(() => {
+    if (apiLastRecords === csvData.length) {
+      return;
+    }
+
+    setApiLastRecords(csvData.length);
+    uploadToApi().then();
+  }, 15 * 1000);
 
   return (
     <>
@@ -189,10 +200,11 @@ export function Measure() {
           className="mb-2"
           variant="white"
           onClick={uploadToApi}
-          disabled={apiLoading}
+          disabled={settings.apiAutomatic || apiLoading}
         >
           {apiLoading ? `Loading...` : `Sync with API`}{" "}
           {apiInfo ? `(${apiInfo})` : null}
+          {settings.apiAutomatic ? `[AUTO]` : null}
         </Button>
       ) : null}
       {settings.testMode ? (

@@ -12,6 +12,7 @@ export interface SettingsReducerState {
   powerFac: number;
   airDensity: number;
   apiEnabled: boolean;
+  apiAutomatic: boolean;
   apiUrl: string;
 }
 
@@ -36,6 +37,7 @@ const INITIAL_STATE: SettingsReducerState = {
   powerFac: 1.1,
   airDensity: 1.2,
   apiEnabled: false,
+  apiAutomatic: false,
   apiUrl: "",
 };
 
