@@ -102,14 +102,17 @@ export function Measure() {
     setApiLoading(false);
   };
 
-  useInterval(() => {
-    if (apiLastRecords === csvData.length) {
-      return;
-    }
+  useInterval(
+    () => {
+      if (apiLastRecords === csvData.length) {
+        return;
+      }
 
-    setApiLastRecords(csvData.length);
-    uploadToApi().then();
-  }, 15 * 1000);
+      setApiLastRecords(csvData.length);
+      uploadToApi().then();
+    },
+    settings.apiAutomatic ? 15 * 1000 : null,
+  );
 
   return (
     <>
