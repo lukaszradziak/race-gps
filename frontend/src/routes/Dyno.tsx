@@ -94,6 +94,36 @@ export function Dyno() {
     );
   };
 
+  const shareDynoCSV = async () => {
+    const records = dyno.getPowerRecords();
+
+    if (!records.length) {
+      return;
+    }
+
+    const fileName = `race-gps-dyno-data-${Date.now()}.csv`;
+    const csvContent =
+      Object.keys(records[0]).join(",") +
+      "\n" +
+      records.map((data) => Object.values(data).join(",")).join("\n");
+
+    const file = new File([csvContent], fileName, { type: "text/csv" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: "Dyno Data",
+          text: "Race GPS Dyno Export",
+        });
+      } catch (error) {
+        console.error("Error sharing:", error);
+      }
+    } else {
+      alert("Sharing not supported on this browser/device");
+    }
+  };
+
   useEffect(() => {
     dyno.setConfig(
       settings.weight,
@@ -140,7 +170,10 @@ export function Dyno() {
           options={dynoChart}
           ref={chartComponentRef}
         />
-        <Button onClick={downloadDynoCSV}>Export CSV</Button>
+        <div style={{ display: "flex", gap: "5px" }}>
+          <Button onClick={downloadDynoCSV}>Export CSV</Button>
+          <Button onClick={shareDynoCSV}>Share CSV</Button>
+        </div>
       </Card>
 
       {settings.testMode ? (
