@@ -1,0 +1,26 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
+
+  upload:
+    desc: Upload firmware (PlatformIO)
+    cmds:
+      - pio run --target upload
+
+  upload-monitor:
+    desc: Upload firmware and monitor (PlatformIO)
+    cmds:
+      - pio run --target upload
+      - script -q /dev/null pio device monitor --environment esp32dev
+
+  monitor:
+    desc: Monitor serial output (PlatformIO)
+    cmds:
+      - script -q /dev/null pio device monitor --environment esp32dev
+
