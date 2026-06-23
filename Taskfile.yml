@@ -4,23 +4,67 @@ version: '3'
 
 tasks:
   default:
+    desc: Wyświetl dostępne komendy
     cmds:
-      - echo "{{.GREETING}}"
+      - task --list
     silent: true
 
-  upload:
-    desc: Upload firmware (PlatformIO)
-    cmds:
-      - pio run --target upload
+  # ── Produkcja ────────────────────────────────────────────────────────────────
 
-  upload-monitor:
-    desc: Upload firmware and monitor (PlatformIO)
+  build:
+    desc: Kompiluj firmware (produkcja)
     cmds:
-      - pio run --target upload
-      - script -q /dev/null pio device monitor --environment esp32dev
+      - pio run --environment esp32dev
+
+  upload:
+    desc: Wgraj firmware (produkcja)
+    cmds:
+      - pio run --environment esp32dev --target upload
 
   monitor:
-    desc: Monitor serial output (PlatformIO)
+    desc: Monitor Serial (produkcja)
     cmds:
       - script -q /dev/null pio device monitor --environment esp32dev
 
+  upload-monitor:
+    desc: Wgraj firmware i otwórz monitor (produkcja)
+    cmds:
+      - pio run --environment esp32dev --target upload
+      - script -q /dev/null pio device monitor --environment esp32dev
+
+  # ── Debug ────────────────────────────────────────────────────────────────────
+
+  build-debug:
+    desc: Kompiluj firmware (debug, flaga GPS_DEBUG)
+    cmds:
+      - pio run --environment debug
+
+  upload-debug:
+    desc: Wgraj firmware debug
+    cmds:
+      - pio run --environment debug --target upload
+
+  monitor-debug:
+    desc: Monitor Serial (debug)
+    cmds:
+      - script -q /dev/null pio device monitor --environment debug
+
+  upload-monitor-debug:
+    desc: Wgraj firmware debug i otwórz monitor
+    cmds:
+      - pio run --environment debug --target upload
+      - script -q /dev/null pio device monitor --environment debug
+
+  # ── Klient ───────────────────────────────────────────────────────────────────
+
+  client:
+    desc: Uruchom dev server klienta (Vite)
+    dir: client
+    cmds:
+      - npm run dev
+
+  client-build:
+    desc: Zbuduj klienta produkcyjnie
+    dir: client
+    cmds:
+      - npm run build

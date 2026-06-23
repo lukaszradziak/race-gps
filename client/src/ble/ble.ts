@@ -7,31 +7,118 @@ const STATS_HISTORY  = 150;  // chart data points (~6s at 25Hz)
 const LOG_EVERY      = 50;   // snapshot to log every N frames
 const EMIT_INTERVAL  = 250;  // ms — how often React gets an update
 
-// ─── Frame types ──────────────────────────────────────────────────────────────
-// Layout must match firmware TelemetryFrame struct (little-endian, packed).
+// ─── Frame layout (must match firmware TelemetryFrame, little-endian, packed)
+// Offset  Size  Field
+//   0      4    timestamp_ms  (uint32)
+//   4      2    seq           (uint16)
+//   6      4    speed_mmps    (int32)  — NAV-PVT gSpeed in mm/s
+//  10      4    altitude_mm   (int32)  — NAV-PVT hMSL in mm
+//  14      2    hacc_dm       (uint16) — hAcc/100, dm (0.1 m units)
+//  16      1    sats          (uint8)  — numSV
+//  17      1    fix           (uint8)  — fixType: 0=no fix, 2=2D, 3=3D, 4=GNSS+DR
+// Total: 18 bytes
+const FRAME_BYTES = 18;
+
 export interface TelemetryFrame {
-  timestamp_ms: number;  // uint32 @ offset 0
-  seq: number;           // uint16 @ offset 4
+  timestamp_ms: number;
+  seq:          number;
+  speed_mmps:   number;
+  altitude_mm:  number;
+  hacc_dm:      number;
+  sats:         number;
+  fix:          number;
+  // client-computed
+  speed_kmh:    number;
+  altitude_m:   number;
+  hacc_m:       number;
+  accel_mss:    number;   // m/s², derived from Δspeed/Δtime using firmware clock
 }
 
-// One entry per received BLE notification, stored internally at 25Hz.
-// Emitted to React inside BLEUpdate at 4Hz.
+export const FIX_LABEL: Record<number, string> = {
+  0: 'Brak',
+  1: 'Dead reckoning',
+  2: '2D',
+  3: '3D',
+  4: 'GNSS+DR',
+  5: 'Tylko czas',
+};
+
 export interface FrameStat {
   interval_ms: number;
-  dropped: number;
+  dropped:     number;
 }
 
-// Snapshot sent to React every EMIT_INTERVAL ms.
 export interface BLEUpdate {
   frame: TelemetryFrame;
-  stats: FrameStat[];   // rolling STATS_HISTORY entries
-  logs: string[];       // full log for clipboard
+  stats: FrameStat[];
+  logs:  string[];
 }
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
 export const CMD = {
-  PING: 0x01,
+  PING:        0x01,
+  ASSIST_TIME: 0x02,
+  ASSIST_POS:  0x03,
 } as const;
+
+// GPS-UTC leap seconds — update when IERS announces a new one (last: Jan 2017 → 18 s).
+const GPS_LEAP_SECONDS = 18;
+
+export interface AssistResult {
+  time: boolean;
+  pos:  boolean;
+  posAccuracy?: number;  // metres
+}
+
+// Sends UBX-MGA-INI-TIME_UTC + optionally UBX-MGA-INI-POS_LLH.
+// Uses browser geolocation for position (IP/WiFi triangulation — even ±5 km helps).
+export async function sendAssist(ble: BLEService): Promise<AssistResult> {
+  // ── Time (always succeeds) ────────────────────────────────────────────────
+  const now = new Date();
+  const timeBuf = new Uint8Array(8);
+  const tv = new DataView(timeBuf.buffer);
+  tv.setUint16(0, now.getUTCFullYear(), true);
+  timeBuf[2] = now.getUTCMonth() + 1;
+  timeBuf[3] = now.getUTCDate();
+  timeBuf[4] = now.getUTCHours();
+  timeBuf[5] = now.getUTCMinutes();
+  timeBuf[6] = now.getUTCSeconds();
+  timeBuf[7] = GPS_LEAP_SECONDS;
+  await ble.sendCommand(CMD.ASSIST_TIME, timeBuf);
+
+  // ── Position (optional — geolocation may be denied or unavailable) ────────
+  try {
+    const geoPos = await new Promise<GeolocationPosition>((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: false,  // WiFi/cell is enough and responds instantly
+        timeout: 10_000,
+        maximumAge: 5 * 60_000,    // cached position up to 5 min is fine for AGPS
+      })
+    );
+
+    const { latitude, longitude, accuracy, altitude, altitudeAccuracy } = geoPos.coords;
+
+    // Altitude: browser reports metres above WGS84 ellipsoid (same unit as UBX-MGA-INI-POS_LLH).
+    // When unavailable (WiFi positioning), assume ±500 m vertical uncertainty so we
+    // don't constrain the module with a wrong height (0 m WGS84 = ~-34 m MSL in Warsaw).
+    const altCm    = altitude != null ? Math.round(altitude * 100) : 0;
+    const hAccM    = accuracy;
+    const vAccM    = altitude != null ? (altitudeAccuracy ?? 200) : 500;
+    const posAccCm = Math.round(Math.sqrt(hAccM * hAccM + vAccM * vAccM) * 100);
+
+    const posBuf = new Uint8Array(16);
+    const pv = new DataView(posBuf.buffer);
+    pv.setInt32 (0,  Math.round(latitude  * 1e7), true);
+    pv.setInt32 (4,  Math.round(longitude * 1e7), true);
+    pv.setInt32 (8,  altCm, true);
+    pv.setUint32(12, posAccCm, true);
+    await ble.sendCommand(CMD.ASSIST_POS, posBuf);
+
+    return { time: true, pos: true, posAccuracy: Math.round(accuracy) };
+  } catch {
+    return { time: true, pos: false };
+  }
+}
 
 // ─── BLEService ───────────────────────────────────────────────────────────────
 type UpdateHandler     = (data: BLEUpdate) => void;
@@ -39,42 +126,37 @@ type ConnectHandler    = () => void;
 type DisconnectHandler = () => void;
 
 export class BLEService {
-  // BLE handles
-  private device: BluetoothDevice | null = null;
-  private server: BluetoothRemoteGATTServer | null = null;
+  private device:        BluetoothDevice | null = null;
+  private server:        BluetoothRemoteGATTServer | null = null;
   private telemetryChar: BluetoothRemoteGATTCharacteristic | null = null;
-  private commandChar: BluetoothRemoteGATTCharacteristic | null = null;
+  private commandChar:   BluetoothRemoteGATTCharacteristic | null = null;
 
-  // Internal state — updated at 25Hz, never touches React
-  private prevTimestampMs = -1;  // firmware clock — immune to JS queue delays
-  private prevSeq         = -1;
-  private sessionStart = 0;
-  private frameCount   = 0;
-  private totalDropped = 0;
-  private statsBuffer: FrameStat[] = [];
-  private intervalBuf: number[]    = [];
-  private latestFrame: TelemetryFrame | null = null;
-  private logs: string[]           = [];
+  // Internal high-frequency state — never touches React directly
+  private prevTimestampMs  = -1;
+  private prevSeq          = -1;
+  private prevSpeedMmps    = -1;
+  private sessionStart     = 0;
+  private frameCount       = 0;
+  private totalDropped     = 0;
+  private statsBuffer:  FrameStat[]     = [];
+  private intervalBuf:  number[]        = [];
+  private latestFrame:  TelemetryFrame | null = null;
+  private logs:         string[]        = [];
 
-  // Throttle timer
   private emitTimer: ReturnType<typeof setInterval> | null = null;
 
-  // Handlers
   private updateHandler?:     UpdateHandler;
   private connectHandler?:    ConnectHandler;
   private disconnectHandler?: DisconnectHandler;
 
-  // ── Event registration ────────────────────────────────────────────────────
   onUpdate(cb: UpdateHandler): this         { this.updateHandler     = cb; return this; }
   onConnect(cb: ConnectHandler): this       { this.connectHandler    = cb; return this; }
   onDisconnect(cb: DisconnectHandler): this { this.disconnectHandler = cb; return this; }
 
-  // ── Connection ────────────────────────────────────────────────────────────
   async connect(): Promise<void> {
     this.device = await navigator.bluetooth.requestDevice({
       filters: [{ services: [SERVICE_UUID] }],
     });
-
     this.device.addEventListener('gattserverdisconnected', () => {
       this.stopEmit();
       this.disconnectHandler?.();
@@ -94,16 +176,16 @@ export class BLEService {
     });
     await this.telemetryChar.startNotifications();
 
-    // Reset internal state for the new session
     this.prevTimestampMs = -1;
     this.prevSeq         = -1;
-    this.sessionStart = performance.now();
-    this.frameCount   = 0;
-    this.totalDropped = 0;
-    this.statsBuffer  = [];
-    this.intervalBuf  = [];
-    this.latestFrame  = null;
-    this.logs         = [];
+    this.prevSpeedMmps   = -1;
+    this.sessionStart    = performance.now();
+    this.frameCount      = 0;
+    this.totalDropped    = 0;
+    this.statsBuffer     = [];
+    this.intervalBuf     = [];
+    this.latestFrame     = null;
+    this.logs            = [];
 
     this.addLog('CONNECTED');
     this.startEmit();
@@ -111,13 +193,10 @@ export class BLEService {
   }
 
   async disconnect(): Promise<void> {
-    if (this.telemetryChar) {
-      await this.telemetryChar.stopNotifications().catch(() => {});
-    }
+    if (this.telemetryChar) await this.telemetryChar.stopNotifications().catch(() => {});
     this.server?.disconnect();
   }
 
-  // ── Send command ──────────────────────────────────────────────────────────
   async sendCommand(cmd: number, payload: Uint8Array = new Uint8Array()): Promise<void> {
     if (!this.commandChar) throw new Error('BLE not connected');
     const buf = new Uint8Array(1 + payload.length);
@@ -126,11 +205,8 @@ export class BLEService {
     await this.commandChar.writeValueWithoutResponse(buf);
   }
 
-  get connected(): boolean {
-    return this.server?.connected ?? false;
-  }
+  get connected(): boolean { return this.server?.connected ?? false; }
 
-  // Returns formatted log text ready for clipboard.
   formatLogs(): string {
     return [
       'Race GPS v2 — BLE log',
@@ -142,31 +218,50 @@ export class BLEService {
 
   // ── Internal: frame processing at 25Hz ───────────────────────────────────
   private handleFrame(view: DataView): void {
-    if (view.byteLength < 6) return;
+    if (view.byteLength < FRAME_BYTES) return;
 
-    const frame: TelemetryFrame = {
-      timestamp_ms: view.getUint32(0, true),
-      seq:          view.getUint16(4, true),
-    };
+    const timestamp_ms = view.getUint32(0, true);
+    const seq          = view.getUint16(4, true);
+    const speed_mmps   = view.getInt32(6, true);
+    const altitude_mm  = view.getInt32(10, true);
+    const hacc_dm      = view.getUint16(14, true);
+    const sats         = view.getUint8(16);
+    const fix          = view.getUint8(17);
 
-    // Use firmware clock for interval — JS performance.now() includes event-queue
-    // delays which cause paired false spikes (one long bar + one short bar).
-    const interval = this.prevTimestampMs >= 0
-      ? frame.timestamp_ms - this.prevTimestampMs
-      : 0;
+    const interval = this.prevTimestampMs >= 0 ? timestamp_ms - this.prevTimestampMs : 0;
     const dropped  = this.prevSeq >= 0
-      ? Math.max(0, (frame.seq - this.prevSeq - 1 + 65536) % 65536)
+      ? Math.max(0, (seq - this.prevSeq - 1 + 65536) % 65536)
       : 0;
 
-    this.prevTimestampMs = frame.timestamp_ms;
-    this.prevSeq         = frame.seq;
-    this.frameCount   += 1;
-    this.totalDropped += dropped;
-    this.latestFrame   = frame;
+    // Acceleration: Δspeed / Δtime, computed from firmware timestamps (ms).
+    // Skip first frame and frames with no GPS fix (fix=0).
+    const dt_s = interval / 1000;
+    const accel_mss = (this.prevSpeedMmps >= 0 && dt_s > 0 && fix > 0)
+      ? (speed_mmps - this.prevSpeedMmps) / 1000 / dt_s
+      : 0;
+
+    this.prevTimestampMs = timestamp_ms;
+    this.prevSeq         = seq;
+    this.prevSpeedMmps   = speed_mmps;
+    this.frameCount     += 1;
+    this.totalDropped   += dropped;
+
+    this.latestFrame = {
+      timestamp_ms,
+      seq,
+      speed_mmps,
+      altitude_mm,
+      hacc_dm,
+      sats,
+      fix,
+      speed_kmh:  speed_mmps * 3.6 / 1000,
+      altitude_m: altitude_mm / 1000,
+      hacc_m:     hacc_dm / 10,
+      accel_mss,
+    };
 
     if (interval > 0) this.intervalBuf.push(interval);
 
-    // Rolling chart buffer — pure array ops, no React
     const stat: FrameStat = { interval_ms: interval, dropped };
     if (this.statsBuffer.length >= STATS_HISTORY) {
       this.statsBuffer = [...this.statsBuffer.slice(1), stat];
@@ -174,42 +269,32 @@ export class BLEService {
       this.statsBuffer = [...this.statsBuffer, stat];
     }
 
-    // Periodic log snapshot
     if (this.frameCount % LOG_EVERY === 0 && this.intervalBuf.length > 0) {
       const buf    = this.intervalBuf;
       const avg    = buf.reduce((a, b) => a + b, 0) / buf.length;
       const jitter = Math.sqrt(buf.reduce((a, b) => a + (b - avg) ** 2, 0) / buf.length);
       this.addLog(
         `STATS  frames=${this.frameCount}` +
-        `  avg=${avg.toFixed(0)}ms` +
-        `  jitter=±${jitter.toFixed(0)}ms` +
-        `  dropped=${this.totalDropped}`,
+        `  avg=${avg.toFixed(0)}ms  jitter=±${jitter.toFixed(0)}ms` +
+        `  dropped=${this.totalDropped}` +
+        `  fix=${fix}  sats=${sats}  speed=${(speed_mmps * 3.6 / 1000).toFixed(1)}km/h`,
       );
       this.intervalBuf = [];
     }
   }
 
-  // ── Internal: emit to React at 4Hz ───────────────────────────────────────
   private startEmit(): void {
     this.emitTimer = setInterval(() => {
       if (this.latestFrame && this.updateHandler) {
-        this.updateHandler({
-          frame: this.latestFrame,
-          stats: this.statsBuffer,
-          logs:  this.logs,
-        });
+        this.updateHandler({ frame: this.latestFrame, stats: this.statsBuffer, logs: this.logs });
       }
     }, EMIT_INTERVAL);
   }
 
   private stopEmit(): void {
-    if (this.emitTimer !== null) {
-      clearInterval(this.emitTimer);
-      this.emitTimer = null;
-    }
+    if (this.emitTimer !== null) { clearInterval(this.emitTimer); this.emitTimer = null; }
   }
 
-  // ── Internal: log ─────────────────────────────────────────────────────────
   private addLog(msg: string): void {
     const elapsed = ((performance.now() - this.sessionStart) / 1000).toFixed(3);
     this.logs = [...this.logs, `[+${elapsed}s] ${msg}`];
