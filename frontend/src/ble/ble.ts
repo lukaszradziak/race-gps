@@ -4,6 +4,7 @@ const TELEMETRY_CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 const COMMAND_CHAR_UUID   = 'beb5483f-36e1-4688-b7f5-ea07361b26a8';
 
 const STATS_HISTORY  = 150;     // chart data points (~6s at 25Hz)
+const SPEED_HISTORY  = 150;     // speed chart points (~6s at 25Hz)
 const LOG_EVERY      = 50;      // snapshot to log every N frames
 const EMIT_INTERVAL  = 250;     // ms — how often React gets an update
 const MAX_RECORDS    = 30_000;  // ~20 min at 25Hz; oldest frames trimmed when exceeded
@@ -51,10 +52,11 @@ export interface FrameStat {
 }
 
 export interface BLEUpdate {
-  frame:       TelemetryFrame;
-  stats:       FrameStat[];
-  logs:        string[];
-  recordCount: number;
+  frame:        TelemetryFrame;
+  stats:        FrameStat[];
+  speedHistory: number[];
+  logs:         string[];
+  recordCount:  number;
 }
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
@@ -142,6 +144,7 @@ export class BLEService {
   private frameCount       = 0;
   private totalDropped     = 0;
   private statsBuffer:  FrameStat[]     = [];
+  private speedBuf:     number[]        = [];
   private intervalBuf:  number[]        = [];
   private latestFrame:  TelemetryFrame | null = null;
   private logs:         string[]        = [];
@@ -224,6 +227,7 @@ export class BLEService {
     this.frameCount      = 0;
     this.totalDropped    = 0;
     this.statsBuffer     = [];
+    this.speedBuf        = [];
     this.intervalBuf     = [];
     this.latestFrame     = null;
     this.logs            = [];
@@ -310,6 +314,13 @@ export class BLEService {
 
     if (interval > 0) this.intervalBuf.push(interval);
 
+    const kmh = speed_mmps * 3.6 / 1000;
+    if (this.speedBuf.length >= SPEED_HISTORY) {
+      this.speedBuf = [...this.speedBuf.slice(1), kmh];
+    } else {
+      this.speedBuf = [...this.speedBuf, kmh];
+    }
+
     const stat: FrameStat = { interval_ms: interval, dropped };
     if (this.statsBuffer.length >= STATS_HISTORY) {
       this.statsBuffer = [...this.statsBuffer.slice(1), stat];
@@ -334,7 +345,7 @@ export class BLEService {
   private startEmit(): void {
     this.emitTimer = setInterval(() => {
       if (this.latestFrame && this.updateHandler) {
-        this.updateHandler({ frame: this.latestFrame, stats: this.statsBuffer, logs: this.logs, recordCount: this.recordBuffer.length });
+        this.updateHandler({ frame: this.latestFrame, stats: this.statsBuffer, speedHistory: this.speedBuf, logs: this.logs, recordCount: this.recordBuffer.length });
       }
     }, EMIT_INTERVAL);
   }

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { BLEService, CMD, FIX_LABEL, sendAssist } from './ble/ble';
 import type { BLEUpdate, AssistResult } from './ble/ble';
 import { StabilityChart } from './ble/StabilityChart';
+import { SpeedChart }     from './ble/SpeedChart';
 import './App.css';
 
 type Status = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -163,6 +164,7 @@ function App() {
         </dl>
       )}
 
+      <SpeedChart     speedHistory={update?.speedHistory ?? []} />
       <StabilityChart stats={update?.stats ?? []} />
     </section>
   );
