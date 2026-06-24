@@ -3,9 +3,11 @@ const SERVICE_UUID        = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 const TELEMETRY_CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 const COMMAND_CHAR_UUID   = 'beb5483f-36e1-4688-b7f5-ea07361b26a8';
 
-const STATS_HISTORY  = 150;  // chart data points (~6s at 25Hz)
-const LOG_EVERY      = 50;   // snapshot to log every N frames
-const EMIT_INTERVAL  = 250;  // ms — how often React gets an update
+const STATS_HISTORY  = 150;     // chart data points (~6s at 25Hz)
+const LOG_EVERY      = 50;      // snapshot to log every N frames
+const EMIT_INTERVAL  = 250;     // ms — how often React gets an update
+const MAX_RECORDS    = 30_000;  // ~20 min at 25Hz; oldest frames trimmed when exceeded
+const TRIM_BY        =  2_500;  // trim in one chunk (~100s) to amortize splice cost
 
 // ─── Frame layout (must match firmware TelemetryFrame, little-endian, packed)
 // Offset  Size  Field
@@ -49,9 +51,10 @@ export interface FrameStat {
 }
 
 export interface BLEUpdate {
-  frame: TelemetryFrame;
-  stats: FrameStat[];
-  logs:  string[];
+  frame:       TelemetryFrame;
+  stats:       FrameStat[];
+  logs:        string[];
+  recordCount: number;
 }
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
@@ -145,6 +148,9 @@ export class BLEService {
 
   private emitTimer: ReturnType<typeof setInterval> | null = null;
 
+  private recording    = false;
+  private recordBuffer: TelemetryFrame[] = [];
+
   private updateHandler?:     UpdateHandler;
   private connectHandler?:    ConnectHandler;
   private disconnectHandler?: DisconnectHandler;
@@ -152,6 +158,41 @@ export class BLEService {
   onUpdate(cb: UpdateHandler): this         { this.updateHandler     = cb; return this; }
   onConnect(cb: ConnectHandler): this       { this.connectHandler    = cb; return this; }
   onDisconnect(cb: DisconnectHandler): this { this.disconnectHandler = cb; return this; }
+
+  downloadCSV(): void {
+    const { blob, filename } = this.buildCSV();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async shareCSV(): Promise<void> {
+    const { blob, filename } = this.buildCSV();
+    if (!blob) return;
+    const file = new File([blob], filename, { type: 'text/csv' });
+    try {
+      await navigator.share({ files: [file], title: filename });
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') throw e;
+    }
+  }
+
+  private buildCSV(): { blob: Blob | null; filename: string } {
+    if (this.recordBuffer.length === 0) return { blob: null, filename: '' };
+    const cols = ['timestamp_ms','seq','speed_kmh','altitude_m','hacc_m','sats','fix','accel_mss'];
+    const rows = this.recordBuffer.map(f =>
+      [f.timestamp_ms, f.seq,
+       f.speed_kmh.toFixed(4), f.altitude_m.toFixed(3), f.hacc_m.toFixed(2),
+       f.sats, f.fix, f.accel_mss.toFixed(4)].join(',')
+    );
+    const csv      = [cols.join(','), ...rows].join('\n');
+    const filename = `race-gps-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+    return { blob: new Blob([csv], { type: 'text/csv' }), filename };
+  }
 
   async connect(): Promise<void> {
     this.device = await navigator.bluetooth.requestDevice({
@@ -187,6 +228,8 @@ export class BLEService {
     this.latestFrame     = null;
     this.logs            = [];
 
+    this.recordBuffer = [];
+    this.recording    = true;
     this.addLog('CONNECTED');
     this.startEmit();
     this.connectHandler?.();
@@ -260,6 +303,11 @@ export class BLEService {
       accel_mss,
     };
 
+    if (this.recording) {
+      if (this.recordBuffer.length >= MAX_RECORDS) this.recordBuffer.splice(0, TRIM_BY);
+      this.recordBuffer.push(this.latestFrame!);
+    }
+
     if (interval > 0) this.intervalBuf.push(interval);
 
     const stat: FrameStat = { interval_ms: interval, dropped };
@@ -286,13 +334,14 @@ export class BLEService {
   private startEmit(): void {
     this.emitTimer = setInterval(() => {
       if (this.latestFrame && this.updateHandler) {
-        this.updateHandler({ frame: this.latestFrame, stats: this.statsBuffer, logs: this.logs });
+        this.updateHandler({ frame: this.latestFrame, stats: this.statsBuffer, logs: this.logs, recordCount: this.recordBuffer.length });
       }
     }, EMIT_INTERVAL);
   }
 
   private stopEmit(): void {
     if (this.emitTimer !== null) { clearInterval(this.emitTimer); this.emitTimer = null; }
+    this.recording = false;
   }
 
   private addLog(msg: string): void {

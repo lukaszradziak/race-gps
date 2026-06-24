@@ -49,7 +49,9 @@
 
 .ble-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+  justify-content: center;
 }
 
 .btn {
@@ -87,6 +89,29 @@
   background: transparent;
   color: #22c55e;
   border-color: #22c55e;
+}
+
+/* ── Recording status ────────────────────────────────────────────────────── */
+
+.record-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text);
+  opacity: 0.75;
+  margin: 0;
+}
+
+.record-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pulse 1.5s infinite;
+  flex-shrink: 0;
 }
 
 /* ── Assist result ────────────────────────────────────────────────────────── */

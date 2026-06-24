@@ -54,6 +54,11 @@ function App() {
     setTimeout(() => setAssistResult(null), 8000);
   }, []);
 
+  const downloadCSV = useCallback(() => bleRef.current?.downloadCSV(), []);
+  const shareCSV    = useCallback(() => { bleRef.current?.shareCSV(); }, []);
+
+  const canShare = !!navigator.canShare;
+
   const copyLogs = useCallback(async () => {
     const text = bleRef.current?.formatLogs() ?? update?.logs.join('\n') ?? '';
     await navigator.clipboard.writeText(text);
@@ -61,9 +66,14 @@ function App() {
     setTimeout(() => setCopied(false), 2000);
   }, [update]);
 
-  const connected = status === 'connected';
-  const hasLogs   = (update?.logs.length ?? 0) > 0;
-  const frame     = update?.frame ?? null;
+  const connected   = status === 'connected';
+  const hasLogs     = (update?.logs.length ?? 0) > 0;
+  const recordCount = update?.recordCount ?? 0;
+  const recSec      = Math.round(recordCount / 25);
+  const recLabel    = recSec < 60
+    ? `${recSec} s`
+    : `${Math.floor(recSec / 60)} min ${recSec % 60} s`;
+  const frame       = update?.frame ?? null;
 
   const fixOk = frame && frame.fix >= 2;
 
@@ -95,7 +105,19 @@ function App() {
             {copied ? 'Skopiowano!' : 'Kopiuj logi'}
           </button>
         )}
+        {recordCount > 0 && (
+          <button className="btn btn-ghost" onClick={downloadCSV}>Pobierz CSV</button>
+        )}
+        {recordCount > 0 && canShare && (
+          <button className="btn btn-ghost" onClick={shareCSV}>Udostępnij CSV</button>
+        )}
       </div>
+
+      {connected && recordCount > 0 && (
+        <p className="record-status">
+          <span className="record-dot" /> {recordCount.toLocaleString('pl-PL')} klatek ({recLabel})
+        </p>
+      )}
 
       {errorMsg && <p className="ble-error">{errorMsg}</p>}
 
