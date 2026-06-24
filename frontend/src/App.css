@@ -1,0 +1,286 @@
+#center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-grow: 1;
+  padding: 32px 20px;
+}
+
+/* ── Status badge ─────────────────────────────────────────────────────────── */
+
+.ble-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.ble-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+
+.ble-status[data-status='connecting'] .ble-dot {
+  background: #f59e0b;
+  animation: pulse 1s infinite;
+}
+
+.ble-status[data-status='connected'] .ble-dot {
+  background: #22c55e;
+}
+
+.ble-status[data-status='error'] .ble-dot {
+  background: #ef4444;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+
+.ble-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn {
+  font: inherit;
+  font-size: 15px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.15s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    box-shadow: var(--shadow);
+  }
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-h);
+  border-color: var(--border);
+}
+
+.btn-assist {
+  background: transparent;
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+/* ── Recording status ────────────────────────────────────────────────────── */
+
+.record-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text);
+  opacity: 0.75;
+  margin: 0;
+}
+
+.record-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pulse 1.5s infinite;
+  flex-shrink: 0;
+}
+
+/* ── Assist result ────────────────────────────────────────────────────────── */
+
+.ble-assist-result {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  font-family: var(--mono);
+  margin: 0;
+}
+
+.assist-ok {
+  color: #22c55e;
+
+  &::before { content: '✓ '; }
+}
+
+.assist-warn {
+  color: #f59e0b;
+
+  &::before { content: '⚠ '; }
+}
+
+/* ── Error ────────────────────────────────────────────────────────────────── */
+
+.ble-error {
+  color: #ef4444;
+  font-size: 14px;
+  font-family: var(--mono);
+  max-width: 360px;
+  text-align: center;
+}
+
+/* ── Stability chart ─────────────────────────────────────────────────────── */
+
+.ble-chart {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ble-chart-stats {
+  display: flex;
+  gap: 20px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+
+  strong {
+    color: var(--text-h);
+  }
+
+  .stat-warn strong {
+    color: #ef4444;
+  }
+
+  .stat-muted {
+    opacity: 0.5;
+  }
+}
+
+.ble-chart-canvas-wrap {
+  position: relative;
+  width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+
+  canvas {
+    display: block;
+  }
+}
+
+.ble-chart-labels {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3px 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text);
+  opacity: 0.5;
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* ── Speed hero ───────────────────────────────────────────────────────────── */
+
+.speed-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  line-height: 1;
+}
+
+.speed-hero-value {
+  font-size: clamp(80px, 25vw, 160px);
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -3px;
+  color: var(--text-h);
+  transition: color 0.2s, opacity 0.2s;
+}
+
+.speed-hero-unit {
+  font-size: clamp(20px, 5vw, 32px);
+  font-family: var(--mono);
+  color: var(--text);
+  opacity: 0.6;
+  align-self: flex-end;
+  padding-bottom: 0.15em;
+}
+
+.speed-hero[data-ok='false'] .speed-hero-value {
+  color: var(--text);
+  opacity: 0.3;
+}
+
+/* ── Telemetry frame ──────────────────────────────────────────────────────── */
+
+.ble-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 16px 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--code-bg);
+  min-width: 220px;
+}
+
+.ble-frame-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  font-family: var(--mono);
+  font-size: 14px;
+
+  dt {
+    color: var(--text);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--text-h);
+    font-weight: 600;
+  }
+}
+
+.ble-frame-big {
+  font-size: 22px;
+
+  dd {
+    font-size: 26px;
+    letter-spacing: -0.5px;
+  }
+
+  &[data-ok='false'] dd {
+    color: var(--text);
+    opacity: 0.4;
+  }
+}

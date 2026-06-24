@@ -1,183 +1,422 @@
 #include <Arduino.h>
-#include <TinyGPSPlus.h>
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
-#include <SoftwareSerial.h>
-#include "board_config.cpp"
-#include "HardwareSerial.h"
+#include <NimBLEDevice.h>
+#include <WiFi.h>
 
-#define SERVICE_UUID "65316b7c-b605-45b4-be6d-b02473b0d29a"
-#define CHARACTERISTIC_UUID "c8ad396d-8006-488d-beed-3a55c4b5ccae"
+// ─── UUIDs ────────────────────────────────────────────────────────────────────
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define TELEMETRY_CHAR_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define COMMAND_CHAR_UUID   "beb5483f-36e1-4688-b7f5-ea07361b26a8"
 
-const byte gps_setup_10Hz[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12, 0xB5, 0x62, 0x06, 0x08, 0x00, 0x00, 0x0E, 0x30};
-const byte gps_setup_115200baud[] = {0xb5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xd0, 0x08, 0x00, 0x00, 0x00, 0xc2, 0x01, 0x00, 0x07, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc4, 0x96, 0xb5, 0x62, 0x06, 0x00, 0x01, 0x00, 0x01, 0x08, 0x22};
-const byte gps_setup_38400baud[] = {0xb5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xd0, 0x08, 0x00, 0x00, 0x00, 0x96, 0x00, 0x00, 0x07, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x97, 0xa8};
-const byte gps_setup_9600baud[] = {0xb5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xd0, 0x08, 0x00, 0x00, 0x80, 0x25, 0x00, 0x00, 0x07, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa6, 0xcd, 0xb5, 0x62, 0x06, 0x00, 0x01, 0x00, 0x01, 0x08, 0x22};
-const byte gps_setup_GPDTM_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x44, 0x54, 0x4d, 0x2a, 0x33, 0x42, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x0a, 0x00, 0x04, 0x23};
-const byte gps_setup_GPGBS_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x47, 0x42, 0x53, 0x2a, 0x33, 0x30, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x09, 0x00, 0x03, 0x21};
-const byte gps_setup_GPGGA_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x47, 0x47, 0x41, 0x2a, 0x32, 0x37, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x00, 0x00, 0xfa, 0x0f};
-const byte gps_setup_GPGLL_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x47, 0x4c, 0x4c, 0x2a, 0x32, 0x31, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x01, 0x00, 0xfb, 0x11};
-const byte gps_setup_GPGRS_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x47, 0x52, 0x53, 0x2a, 0x32, 0x30, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x06, 0x00, 0x00, 0x1b};
-const byte gps_setup_GPGSA_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x47, 0x53, 0x41, 0x2a, 0x33, 0x33, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x02, 0x00, 0xfc, 0x13};
-const byte gps_setup_GPGST_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x47, 0x53, 0x54, 0x2a, 0x32, 0x36, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x07, 0x00, 0x01, 0x1d};
-const byte gps_setup_GPGSV_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x47, 0x53, 0x56, 0x2a, 0x32, 0x34, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x03, 0x00, 0xfd, 0x15};
-const byte gps_setup_GPRMC_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x52, 0x4d, 0x43, 0x2a, 0x33, 0x41, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x04, 0x00, 0xfe, 0x17};
-const byte gps_setup_GPVTG_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x56, 0x54, 0x47, 0x2a, 0x32, 0x33, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x05, 0x00, 0xff, 0x19};
-const byte gps_setup_GPZDA_off[] = {0x24, 0x45, 0x49, 0x47, 0x50, 0x51, 0x2c, 0x5a, 0x44, 0x41, 0x2a, 0x33, 0x39, 0x0d, 0x0a, 0xb5, 0x62, 0x06, 0x01, 0x03, 0x00, 0xf0, 0x08, 0x00, 0x02, 0x1f};
-const byte gps_setup_save_settings[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x31, 0xBF};
-const byte gps_setup_reset_to_manufacturer_defaults[] = {0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x07, 0x1F, 0x9E};
-const byte gps_setup_reset[] = {0xB5, 0x62, 0x06, 0x04, 0x04, 0x00, 0xFF, 0x87, 0x01, 0x00, 0x95, 0xF7};
+// ─── GPS UART (M10050, pins 16=RX 17=TX) ─────────────────────────────────────
+#define GPS_RX 16
+#define GPS_TX 17
 
-BLEServer *pServer = NULL;
-BLECharacteristic *pCharacteristic = NULL;
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
+// ─── Debug logging ────────────────────────────────────────────────────────────
+// Enabled only in env:debug (-D GPS_DEBUG). In production Serial is never
+// initialized so UART0 stays idle and there is zero scheduling overhead.
+#ifdef GPS_DEBUG
+  #define GPS_LOG(...)   Serial.printf(__VA_ARGS__)
+  #define GPS_LOGLN(...) Serial.println(__VA_ARGS__)
+#else
+  #define GPS_LOG(...)   ((void)0)
+  #define GPS_LOGLN(...) ((void)0)
+#endif
 
-TinyGPSPlus gps;
-HardwareSerial hs(2);
-byte data[9];
-int lastTime = 0;
+// ─── BLE frame (little-endian, packed — JS DataView must use littleEndian=true)
+// Offsets: timestamp_ms@0(4), seq@4(2), speed_mmps@6(4), altitude_mm@10(4),
+//          hacc_dm@14(2), sats@16(1), fix@17(1)  — 18 bytes total
+struct __attribute__((packed)) TelemetryFrame {
+    uint32_t timestamp_ms;  // millis()
+    uint16_t seq;           // monotonic counter — detect drops client-side
+    int32_t  speed_mmps;    // NAV-PVT gSpeed (I4, mm/s, always ≥0 physically)
+    int32_t  altitude_mm;   // NAV-PVT hMSL (I4, mm above MSL)
+    uint16_t hacc_dm;       // NAV-PVT hAcc/100, capped (dm = 0.1 m units)
+    uint8_t  sats;          // NAV-PVT numSV
+    uint8_t  fix;           // NAV-PVT fixType: 0=no fix, 2=2D, 3=3D, 4=GNSS+DR
+};
 
-class MyServerCallbacks : public BLEServerCallbacks
-{
-    void onConnect(BLEServer *pServer)
-    {
-        deviceConnected = true;
+struct __attribute__((packed)) CommandFrame {
+    uint8_t cmd;
+    uint8_t payload[19];
+};
+
+enum Command : uint8_t {
+    CMD_PING         = 0x01,
+    CMD_ASSIST_TIME  = 0x02,  // payload: year(2LE), month, day, hour, min, sec, leapSecs — 8 B
+    CMD_ASSIST_POS   = 0x03,  // payload: lat_e7(4LE), lon_e7(4LE), alt_cm(4LE), acc_cm(4LE) — 16 B
+};
+
+// ─── GPS state ────────────────────────────────────────────────────────────────
+static int32_t  g_speed_mmps  = 0;
+static int32_t  g_altitude_mm = 0;
+static uint32_t g_hacc_mm     = 999999;
+static uint8_t  g_sats        = 0;
+static uint8_t  g_fix         = 0;
+
+// ─── UBX send helper ─────────────────────────────────────────────────────────
+// Builds and flushes one UBX frame: B5 62 [cls] [id] [len16LE] [payload] [ck_a ck_b]
+static void ubxSend(HardwareSerial& serial, uint8_t cls, uint8_t id,
+                    const uint8_t* payload, size_t len) {
+    uint8_t ck_a = 0, ck_b = 0;
+    auto feed = [&](uint8_t b) { ck_a += b; ck_b += ck_a; };
+    uint8_t lo = len & 0xFF, hi = (len >> 8) & 0xFF;
+    feed(cls); feed(id); feed(lo); feed(hi);
+    for (size_t i = 0; i < len; i++) feed(payload[i]);
+
+    serial.write(0xB5); serial.write(0x62);
+    serial.write(cls);  serial.write(id);
+    serial.write(lo);   serial.write(hi);
+    serial.write(payload, len);
+    serial.write(ck_a); serial.write(ck_b);
+    serial.flush();
+}
+
+// Blocking wait for UBX-ACK-ACK or UBX-ACK-NAK after a config command.
+// Reads raw bytes from serial with a 300 ms timeout.
+// Only compiled in GPS_DEBUG builds — production never waits here.
+#ifdef GPS_DEBUG
+static void ubxWaitAck(HardwareSerial& serial, uint8_t expectCls, uint8_t expectId) {
+    const uint32_t deadline = millis() + 300;
+    uint8_t buf[16], idx = 0;
+    enum { S1, S2, CLS, ID, L0, L1, PAY, CA, CB } s = S1;
+    uint8_t cls = 0, id = 0, ca = 0, cb = 0;
+    uint16_t len = 0;
+
+    while (millis() < deadline) {
+        if (!serial.available()) continue;
+        uint8_t b = serial.read();
+        switch (s) {
+            case S1: if (b == 0xB5) s = S2; break;
+            case S2: s = (b == 0x62) ? CLS : S1; ca = cb = 0; break;
+            case CLS: cls = b; ca += b; cb += ca; s = ID; break;
+            case ID:  id  = b; ca += b; cb += ca; s = L0; break;
+            case L0:  len = b; ca += b; cb += ca; s = L1; break;
+            case L1:  len |= (uint16_t)b << 8; ca += b; cb += ca;
+                      idx = 0; s = (len > 0) ? PAY : CA; break;
+            case PAY: if (idx < sizeof(buf)) buf[idx] = b;
+                      ca += b; cb += ca; if (++idx >= len) s = CA; break;
+            case CA:  s = (b == ca) ? CB : S1; break;
+            case CB:
+                if (b == cb && cls == 0x05 && len >= 2) {
+                    if (id == 0x01 && buf[0] == expectCls && buf[1] == expectId)
+                        Serial.printf("  ACK  cls=0x%02X id=0x%02X\n", expectCls, expectId);
+                    else if (id == 0x00 && buf[0] == expectCls && buf[1] == expectId)
+                        Serial.printf("  NAK! cls=0x%02X id=0x%02X  <-- wrong key?\n", expectCls, expectId);
+                }
+                s = S1;
+                break;
+        }
+    }
+}
+#define UBX_WAIT_ACK(serial, cls, id) ubxWaitAck(serial, cls, id)
+#else
+#define UBX_WAIT_ACK(serial, cls, id) ((void)0)
+#endif
+
+// ─── GPS init ────────────────────────────────────────────────────────────────
+// Sends UBX-CFG-VALSET (RAM layer) commands to configure the M10050:
+//   • CFG-UART1-BAUDRATE  0x40520001  U4  → 115200
+//   • CFG-UART1OUTPROT-NMEA  0x10740002  L   → false  (kills NMEA flood at 25Hz)
+//   • CFG-UART1OUTPROT-UBX   0x10740001  L   → true
+//   • CFG-RATE-MEAS          0x30210001  U2  → 40 ms  (25 Hz)
+//   • CFG-MSGOUT-UBX_NAV_PVT_UART1  0x20910006  U1  → 1
+static void gpsInit() {
+    // Switch baud at both 9600 (factory default) and 38400 (common pre-config).
+    // Whichever one matches the module's current baud will succeed; the other
+    // sends garbled bytes the module ignores.
+    const uint8_t setBaud[] = {
+        0x00, 0x01, 0x00, 0x00,          // version=0, layers=RAM, reserved×2
+        0x01, 0x00, 0x52, 0x40,          // key 0x40520001 (CFG-UART1-BAUDRATE)
+        0x00, 0xC2, 0x01, 0x00,          // value 115200 = 0x0001C200
     };
+    const uint32_t initBauds[] = {9600, 38400};
+    for (int i = 0; i < 2; i++) {
+        Serial2.begin(initBauds[i], SERIAL_8N1, GPS_RX, GPS_TX);
+        delay(50);
+        ubxSend(Serial2, 0x06, 0x8A, setBaud, sizeof(setBaud));
+        delay(100);
+        Serial2.end();
+    }
 
-    void onDisconnect(BLEServer *pServer)
-    {
-        deviceConnected = false;
+    Serial2.begin(115200, SERIAL_8N1, GPS_RX, GPS_TX);
+    delay(100);
+    GPS_LOGLN("GPS init at 115200:");
+
+    // Disable NMEA, enable UBX on UART1 output
+    const uint8_t disNmea[] = {
+        0x00, 0x01, 0x00, 0x00,
+        0x02, 0x00, 0x74, 0x10, 0x00,    // CFG-UART1OUTPROT-NMEA = false
+    };
+    ubxSend(Serial2, 0x06, 0x8A, disNmea, sizeof(disNmea));
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
+
+    const uint8_t enUbx[] = {
+        0x00, 0x01, 0x00, 0x00,
+        0x01, 0x00, 0x74, 0x10, 0x01,    // CFG-UART1OUTPROT-UBX = true
+    };
+    ubxSend(Serial2, 0x06, 0x8A, enUbx, sizeof(enUbx));
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
+
+    // 25 Hz measurement rate + enable UBX-NAV-PVT on UART1
+    const uint8_t cfgRate[] = {
+        0x00, 0x01, 0x00, 0x00,
+        0x01, 0x00, 0x21, 0x30, 0x28, 0x00,  // CFG-RATE-MEAS = 40 ms
+        0x06, 0x00, 0x91, 0x20, 0x01,         // CFG-MSGOUT-UBX_NAV_PVT_UART1 = 1
+    };
+    ubxSend(Serial2, 0x06, 0x8A, cfgRate, sizeof(cfgRate));
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
+
+    // Navigation model + elevation mask — constellations left at factory default
+    // (GPS + Galileo + BeiDou B1I + QZSS + SBAS). Switching to B1C for GLONASS
+    // loses more BeiDou sats than it gains, especially with limited sky view.
+    //
+    // CFG-NAVSPG-DYNMODEL = 4 (Automotive): tightens Kalman filter to ground
+    // vehicle physics — critical for accurate speed during hard braking.
+    // CFG-NAVSPG-INFIL_MINELEV = 0°: track all satellites above horizon
+    // (default 5°). Adds 1-3 low-elevation sats, minor noise trade-off.
+    const uint8_t cfgNav[] = {
+        0x00, 0x01, 0x00, 0x00,          // VALSET header: RAM layer
+        0x21, 0x00, 0x11, 0x20, 0x04,    // CFG-NAVSPG-DYNMODEL      = 4 (Automotive)
+        0xA1, 0x00, 0x11, 0x20, 0x00,    // CFG-NAVSPG-INFIL_MINELEV = 0°
+    };
+    ubxSend(Serial2, 0x06, 0x8A, cfgNav, sizeof(cfgNav));
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
+
+    GPS_LOGLN("GPS: 115200 | 25 Hz | UBX-NAV-PVT | default constellations | Automotive | elev=0°");
+}
+
+// ─── UBX-NAV-PVT parser ──────────────────────────────────────────────────────
+// State machine — reads Serial2 and updates g_* globals on each valid PVT frame.
+// NMEA lines and unknown UBX messages are transparently discarded.
+//
+// NAV-PVT payload offsets used:
+//   [20] fixType  [23] numSV  [36..39] hMSL(mm)  [40..43] hAcc(mm)  [60..63] gSpeed(mm/s)
+static void processUBX() {
+    enum State : uint8_t { SYNC1, SYNC2, CLS, MSG_ID, LEN_LO, LEN_HI, PAYLOAD, CK_A, CK_B };
+    static State    state = SYNC1;
+    static uint8_t  cls, id;
+    static uint16_t len, idx;
+    static uint8_t  buf[96];   // NAV-PVT payload = 92 bytes; 96 gives headroom
+    static uint8_t  ck_a, ck_b;
+
+    while (Serial2.available()) {
+        const uint8_t b = (uint8_t)Serial2.read();
+        switch (state) {
+            case SYNC1:
+                if (b == 0xB5) state = SYNC2;
+                break;
+            case SYNC2:
+                if      (b == 0x62) { state = CLS; ck_a = ck_b = 0; }
+                else if (b == 0xB5) { /* 0xB5 0xB5 — restart SYNC2 */ }
+                else                  state = SYNC1;
+                break;
+            case CLS:
+                cls = b; ck_a += b; ck_b += ck_a; state = MSG_ID; break;
+            case MSG_ID:
+                id = b;  ck_a += b; ck_b += ck_a; state = LEN_LO; break;
+            case LEN_LO:
+                len = b; ck_a += b; ck_b += ck_a; state = LEN_HI; break;
+            case LEN_HI:
+                len |= (uint16_t)b << 8; ck_a += b; ck_b += ck_a;
+                idx = 0;
+                state = (len > 0) ? PAYLOAD : CK_A;
+                break;
+            case PAYLOAD:
+                if (idx < sizeof(buf)) buf[idx] = b;
+                ck_a += b; ck_b += ck_a;
+                if (++idx >= len) state = CK_A;
+                break;
+            case CK_A:
+                state = (b == ck_a) ? CK_B : SYNC1;
+                break;
+            case CK_B:
+                if (b == ck_b) {
+                    // UBX-NAV-PVT (class=0x01, id=0x07)
+                    if (cls == 0x01 && id == 0x07 && len >= 64) {
+                        g_fix  = buf[20];
+                        g_sats = buf[23];
+                        memcpy(&g_altitude_mm, buf + 36, 4);
+                        uint32_t hAcc; memcpy(&hAcc, buf + 40, 4);
+                        memcpy(&g_speed_mmps,  buf + 60, 4);
+                        g_hacc_mm = hAcc;
+#ifdef GPS_DEBUG
+                        static uint32_t pvtCount = 0;
+                        if (++pvtCount % 25 == 1) {  // log once per second
+                            GPS_LOG("PVT #%-5lu fix=%d sats=%2d  spd=%6.1f km/h"
+                                    "  alt=%7.1f m  hAcc=%5.1f m\n",
+                                pvtCount, g_fix, g_sats,
+                                g_speed_mmps * 3.6f / 1000.0f,
+                                g_altitude_mm / 1000.0f,
+                                g_hacc_mm / 1000.0f);
+                        }
+#endif
+                    }
+#ifdef GPS_DEBUG
+                    // UBX-ACK-ACK (class=0x05, id=0x01) — config command accepted
+                    else if (cls == 0x05 && id == 0x01 && len >= 2) {
+                        GPS_LOG("UBX ACK  for class=0x%02X id=0x%02X\n", buf[0], buf[1]);
+                    }
+                    // UBX-ACK-NAK (class=0x05, id=0x00) — config command rejected
+                    else if (cls == 0x05 && id == 0x00 && len >= 2) {
+                        GPS_LOG("UBX NAK! for class=0x%02X id=0x%02X  (wrong key?)\n",
+                                buf[0], buf[1]);
+                    }
+#endif
+                }
+#ifdef GPS_DEBUG
+                else {
+                    GPS_LOG("UBX checksum FAIL  cls=0x%02X id=0x%02X len=%d\n", cls, id, len);
+                }
+#endif
+                state = SYNC1;
+                break;
+        }
+    }
+}
+
+// ─── BLE globals ─────────────────────────────────────────────────────────────
+static NimBLECharacteristic* pTelemetryChar = nullptr;
+static NimBLECharacteristic* pCommandChar   = nullptr;
+static bool clientConnected = false;
+
+class ServerCallbacks : public NimBLEServerCallbacks {
+    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
+        clientConnected = true;
+        pServer->updateConnParams(connInfo.getConnHandle(), 16, 32, 0, 500);
+        GPS_LOG("BLE connected  handle=%d\n", connInfo.getConnHandle());
+    }
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override {
+        clientConnected = false;
+        GPS_LOG("BLE disconnected  reason=%d\n", reason);
+        NimBLEDevice::startAdvertising();
     }
 };
 
-void setup()
-{
+class CommandCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo&) override {
+        const NimBLEAttValue val = pChar->getValue();
+        if (val.size() == 0) return;
+        const CommandFrame* frame = reinterpret_cast<const CommandFrame*>(val.data());
+        switch (frame->cmd) {
+            case CMD_PING:
+                GPS_LOGLN("CMD: PING");
+                break;
+
+            case CMD_ASSIST_TIME: {
+                // UBX-MGA-INI-TIME_UTC (class 0x13, id 0x40, type 0x10)
+                // Injects current UTC so the module skips satellite time sync.
+                if (val.size() < 9) break;
+                const uint8_t* p = frame->payload;
+                uint16_t year; memcpy(&year, p, 2);
+                const uint8_t mga[24] = {
+                    0x10,                              // type = UTC
+                    0x00,                              // version
+                    0x00,                              // ref = none
+                    p[7],                              // leapSecs (GPS-UTC offset, currently 18)
+                    (uint8_t)(year & 0xFF), (uint8_t)(year >> 8),
+                    p[2], p[3], p[4], p[5], p[6],     // month, day, hour, min, sec
+                    0x00,                              // reserved
+                    0x00, 0x00, 0x00, 0x00,            // ns = 0
+                    0x01, 0x00,                        // tAccS = 1 s (NTP-synced browser)
+                    0x00, 0x00,                        // reserved
+                    0x00, 0x00, 0x00, 0x00,            // tAccNs = 0
+                };
+                ubxSend(Serial2, 0x13, 0x40, mga, sizeof(mga));
+                GPS_LOG("ASSIST: time %04d-%02d-%02d %02d:%02d:%02d leapSecs=%d\n",
+                        year, p[2], p[3], p[4], p[5], p[6], p[7]);
+                break;
+            }
+
+            case CMD_ASSIST_POS: {
+                // UBX-MGA-INI-POS_LLH (class 0x13, id 0x40, type 0x01)
+                // Injects approximate position so the module skips sky search.
+                if (val.size() < 17) break;
+                const uint8_t* p = frame->payload;
+                int32_t lat_e7, lon_e7, alt_cm; uint32_t acc_cm;
+                memcpy(&lat_e7, p,    4);
+                memcpy(&lon_e7, p+4,  4);
+                memcpy(&alt_cm, p+8,  4);
+                memcpy(&acc_cm, p+12, 4);
+                uint8_t mga[20] = {};
+                mga[0] = 0x01;  // type = LLH
+                memcpy(mga+4,  &lat_e7, 4);
+                memcpy(mga+8,  &lon_e7, 4);
+                memcpy(mga+12, &alt_cm, 4);
+                memcpy(mga+16, &acc_cm, 4);
+                ubxSend(Serial2, 0x13, 0x40, mga, sizeof(mga));
+                GPS_LOG("ASSIST: pos lat=%.5f lon=%.5f alt=%dm acc=%lum\n",
+                        lat_e7 / 1e7, lon_e7 / 1e7, alt_cm / 100, (unsigned long)(acc_cm / 100));
+
+                // UBX-CFG-RST: GNSS-only controlled software reset (resetMode=0x02).
+                // Triggers re-acquisition using the freshly injected MGA data.
+                // navBbrMask=0x0000 = hot start (keeps almanac/ephemeris cache).
+                delay(50);
+                const uint8_t rst[] = { 0x00, 0x00, 0x02, 0x00 };
+                ubxSend(Serial2, 0x06, 0x04, rst, sizeof(rst));
+                GPS_LOGLN("ASSIST: GNSS hot start triggered");
+                break;
+            }
+
+            default:
+                GPS_LOG("CMD: unknown 0x%02X\n", frame->cmd);
+                break;
+        }
+    }
+};
+
+// ─── Setup ───────────────────────────────────────────────────────────────────
+void setup() {
+#ifdef GPS_DEBUG
     Serial.begin(115200);
-    Serial.println("Hello in Race GPS!");
-    Serial.println();
+    Serial.println("Race GPS v2 — starting [DEBUG]");
+#endif
+    WiFi.mode(WIFI_OFF);
 
-    Serial.println("GPS: setup in progress...");
-    hs.begin(GPS_BAUD_DEF, SERIAL_8N1, GPS_TX, GPS_RX);
-    delay(500);
+    gpsInit();
 
-    // hs.write(gps_setup_reset_to_manufacturer_defaults, sizeof(gps_setup_reset_to_manufacturer_defaults));
-    // delay(100);
-    hs.write(gps_setup_GPDTM_off, sizeof(gps_setup_GPDTM_off));
-    delay(100);
-    hs.write(gps_setup_GPGBS_off, sizeof(gps_setup_GPGBS_off));
-    delay(100);
-    hs.write(gps_setup_GPGLL_off, sizeof(gps_setup_GPGLL_off));
-    delay(100);
-    hs.write(gps_setup_GPGRS_off, sizeof(gps_setup_GPGRS_off));
-    delay(100);
-    hs.write(gps_setup_GPGSA_off, sizeof(gps_setup_GPGSA_off));
-    delay(100);
-    hs.write(gps_setup_GPGST_off, sizeof(gps_setup_GPGST_off));
-    delay(100);
-    hs.write(gps_setup_GPGSV_off, sizeof(gps_setup_GPGSV_off));
-    delay(100);
-    hs.write(gps_setup_GPVTG_off, sizeof(gps_setup_GPVTG_off));
-    delay(100);
-    hs.write(gps_setup_GPZDA_off, sizeof(gps_setup_GPZDA_off));
-    delay(100);
-    hs.write(gps_setup_10Hz, sizeof(gps_setup_10Hz));
-    delay(100);
-    hs.write(gps_setup_38400baud, sizeof(gps_setup_38400baud));
-    delay(500);
+    NimBLEDevice::init("RaceGPSv2");
+    NimBLEDevice::setPower(9);
+    NimBLEDevice::setMTU(247);
 
-    Serial.println("GPS: setup is completed");
-    hs.end();
-    hs.begin(38400, SERIAL_8N1, GPS_TX, GPS_RX);
+    NimBLEServer* pServer = NimBLEDevice::createServer();
+    pServer->setCallbacks(new ServerCallbacks());
 
-    BLEDevice::init("ESP32");
-    pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
-    BLEService *pService = pServer->createService(SERVICE_UUID);
-    pCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE |
-            BLECharacteristic::PROPERTY_NOTIFY |
-            BLECharacteristic::PROPERTY_INDICATE);
-    pCharacteristic->addDescriptor(new BLE2902());
+    NimBLEService* pService = pServer->createService(SERVICE_UUID);
+
+    pTelemetryChar = pService->createCharacteristic(TELEMETRY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
+    pCommandChar   = pService->createCharacteristic(COMMAND_CHAR_UUID,   NIMBLE_PROPERTY::WRITE_NR);
+    pCommandChar->setCallbacks(new CommandCallbacks());
+
     pService->start();
 
-    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(SERVICE_UUID);
-    pAdvertising->setScanResponse(false);
-    pAdvertising->setMinPreferred(0x0);
-    BLEDevice::startAdvertising();
+    NimBLEAdvertising* pAdv = NimBLEDevice::getAdvertising();
+    pAdv->addServiceUUID(SERVICE_UUID);
+    pAdv->start();
+
+    GPS_LOGLN("BLE advertising");
 }
 
-void loop()
-{
-#if GPS_DEBUG
-    while (hs.available() > 0)
-    {
-        int read = hs.read();
-        if (gps.encode(read))
-        {
-            Serial.printf(
-                "\n> satellites: %d, speedupd: %d, alt: %d, time: %d, speed: %d\n",
-                gps.satellites.value(),
-                gps.speed.isUpdated() ? 1 : 0,
-                gps.altitude.value(),
-                gps.time.value(),
-                gps.speed.value());
-        }
-        else
-        {
-            Serial.printf("%c", read);
-        }
-    }
-#endif
+// ─── Loop ────────────────────────────────────────────────────────────────────
+static uint32_t lastTelemetry = 0;
+static uint16_t seq = 0;
 
-    if (deviceConnected)
-    {
-        while (hs.available() > 0)
-        {
-            if (gps.encode(hs.read()))
-            {
-                uint32_t time = gps.time.value();
-                int satellites = gps.satellites.value();
-                int32_t speed = gps.speed.value();
-                int32_t alt = gps.altitude.value();
+void loop() {
+    processUBX();
 
-                data[0] = (alt >> 8) & 0xff;
-                data[1] = alt & 0xff;
-                data[2] = (speed >> 8) & 0xff;
-                data[3] = speed & 0xff;
-                data[4] = satellites & 0xff;
-                data[5] = (time >> 24) & 0xff;
-                data[6] = (time >> 16) & 0xff;
-                data[7] = (time >> 8) & 0xff;
-                data[8] = time & 0xff;
+    const uint32_t now = millis();
+    if (clientConnected && (now - lastTelemetry >= 40)) {
+        lastTelemetry = now;
 
-                if (lastTime != time)
-                {
-                    pCharacteristic->setValue(data, 9);
-                    pCharacteristic->notify();
-                    lastTime = time;
-                }
-            }
-        }
+        TelemetryFrame frame;
+        frame.timestamp_ms = now;
+        frame.seq          = seq++;
+        frame.speed_mmps   = g_speed_mmps;
+        frame.altitude_mm  = g_altitude_mm;
+        frame.hacc_dm      = (uint16_t)min(g_hacc_mm / 100, (uint32_t)65535);
+        frame.sats         = g_sats;
+        frame.fix          = g_fix;
 
-        delay(1);
-    }
-
-    if (!deviceConnected && oldDeviceConnected)
-    {
-        delay(500);
-        pServer->startAdvertising();
-        Serial.println("start advertising");
-        oldDeviceConnected = deviceConnected;
-    }
-
-    if (deviceConnected && !oldDeviceConnected)
-    {
-        oldDeviceConnected = deviceConnected;
+        pTelemetryChar->setValue(reinterpret_cast<uint8_t*>(&frame), sizeof(frame));
+        pTelemetryChar->notify();
     }
 }
