@@ -71,6 +71,48 @@ static void ubxSend(HardwareSerial& serial, uint8_t cls, uint8_t id,
     serial.flush();
 }
 
+// Blocking wait for UBX-ACK-ACK or UBX-ACK-NAK after a config command.
+// Reads raw bytes from serial with a 300 ms timeout.
+// Only compiled in GPS_DEBUG builds — production never waits here.
+#ifdef GPS_DEBUG
+static void ubxWaitAck(HardwareSerial& serial, uint8_t expectCls, uint8_t expectId) {
+    const uint32_t deadline = millis() + 300;
+    uint8_t buf[16], idx = 0;
+    enum { S1, S2, CLS, ID, L0, L1, PAY, CA, CB } s = S1;
+    uint8_t cls = 0, id = 0, ca = 0, cb = 0;
+    uint16_t len = 0;
+
+    while (millis() < deadline) {
+        if (!serial.available()) continue;
+        uint8_t b = serial.read();
+        switch (s) {
+            case S1: if (b == 0xB5) s = S2; break;
+            case S2: s = (b == 0x62) ? CLS : S1; ca = cb = 0; break;
+            case CLS: cls = b; ca += b; cb += ca; s = ID; break;
+            case ID:  id  = b; ca += b; cb += ca; s = L0; break;
+            case L0:  len = b; ca += b; cb += ca; s = L1; break;
+            case L1:  len |= (uint16_t)b << 8; ca += b; cb += ca;
+                      idx = 0; s = (len > 0) ? PAY : CA; break;
+            case PAY: if (idx < sizeof(buf)) buf[idx] = b;
+                      ca += b; cb += ca; if (++idx >= len) s = CA; break;
+            case CA:  s = (b == ca) ? CB : S1; break;
+            case CB:
+                if (b == cb && cls == 0x05 && len >= 2) {
+                    if (id == 0x01 && buf[0] == expectCls && buf[1] == expectId)
+                        Serial.printf("  ACK  cls=0x%02X id=0x%02X\n", expectCls, expectId);
+                    else if (id == 0x00 && buf[0] == expectCls && buf[1] == expectId)
+                        Serial.printf("  NAK! cls=0x%02X id=0x%02X  <-- wrong key?\n", expectCls, expectId);
+                }
+                s = S1;
+                break;
+        }
+    }
+}
+#define UBX_WAIT_ACK(serial, cls, id) ubxWaitAck(serial, cls, id)
+#else
+#define UBX_WAIT_ACK(serial, cls, id) ((void)0)
+#endif
+
 // ─── GPS init ────────────────────────────────────────────────────────────────
 // Sends UBX-CFG-VALSET (RAM layer) commands to configure the M10050:
 //   • CFG-UART1-BAUDRATE  0x40520001  U4  → 115200
@@ -98,36 +140,49 @@ static void gpsInit() {
 
     Serial2.begin(115200, SERIAL_8N1, GPS_RX, GPS_TX);
     delay(100);
+    GPS_LOGLN("GPS init at 115200:");
 
     // Disable NMEA, enable UBX on UART1 output
     const uint8_t disNmea[] = {
         0x00, 0x01, 0x00, 0x00,
-        0x02, 0x00, 0x74, 0x10,          // key 0x10740002 (CFG-UART1OUTPROT-NMEA)
-        0x00,                            // false
+        0x02, 0x00, 0x74, 0x10, 0x00,    // CFG-UART1OUTPROT-NMEA = false
     };
     ubxSend(Serial2, 0x06, 0x8A, disNmea, sizeof(disNmea));
-    delay(50);
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
 
     const uint8_t enUbx[] = {
         0x00, 0x01, 0x00, 0x00,
-        0x01, 0x00, 0x74, 0x10,          // key 0x10740001 (CFG-UART1OUTPROT-UBX)
-        0x01,                            // true
+        0x01, 0x00, 0x74, 0x10, 0x01,    // CFG-UART1OUTPROT-UBX = true
     };
     ubxSend(Serial2, 0x06, 0x8A, enUbx, sizeof(enUbx));
-    delay(50);
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
 
     // 25 Hz measurement rate + enable UBX-NAV-PVT on UART1
     const uint8_t cfgRate[] = {
         0x00, 0x01, 0x00, 0x00,
-        0x01, 0x00, 0x21, 0x30,          // key 0x30210001 (CFG-RATE-MEAS)
-        0x28, 0x00,                      // value 40 ms
-        0x06, 0x00, 0x91, 0x20,          // key 0x20910006 (CFG-MSGOUT-UBX_NAV_PVT_UART1)
-        0x01,                            // value 1 = every nav solution
+        0x01, 0x00, 0x21, 0x30, 0x28, 0x00,  // CFG-RATE-MEAS = 40 ms
+        0x06, 0x00, 0x91, 0x20, 0x01,         // CFG-MSGOUT-UBX_NAV_PVT_UART1 = 1
     };
     ubxSend(Serial2, 0x06, 0x8A, cfgRate, sizeof(cfgRate));
-    delay(100);
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
 
-    GPS_LOGLN("GPS: M10050 configured — 115200 baud, 25 Hz, UBX-NAV-PVT");
+    // Navigation model + elevation mask — constellations left at factory default
+    // (GPS + Galileo + BeiDou B1I + QZSS + SBAS). Switching to B1C for GLONASS
+    // loses more BeiDou sats than it gains, especially with limited sky view.
+    //
+    // CFG-NAVSPG-DYNMODEL = 4 (Automotive): tightens Kalman filter to ground
+    // vehicle physics — critical for accurate speed during hard braking.
+    // CFG-NAVSPG-INFIL_MINELEV = 0°: track all satellites above horizon
+    // (default 5°). Adds 1-3 low-elevation sats, minor noise trade-off.
+    const uint8_t cfgNav[] = {
+        0x00, 0x01, 0x00, 0x00,          // VALSET header: RAM layer
+        0x21, 0x00, 0x11, 0x20, 0x04,    // CFG-NAVSPG-DYNMODEL      = 4 (Automotive)
+        0xA1, 0x00, 0x11, 0x20, 0x00,    // CFG-NAVSPG-INFIL_MINELEV = 0°
+    };
+    ubxSend(Serial2, 0x06, 0x8A, cfgNav, sizeof(cfgNav));
+    UBX_WAIT_ACK(Serial2, 0x06, 0x8A);
+
+    GPS_LOGLN("GPS: 115200 | 25 Hz | UBX-NAV-PVT | default constellations | Automotive | elev=0°");
 }
 
 // ─── UBX-NAV-PVT parser ──────────────────────────────────────────────────────
