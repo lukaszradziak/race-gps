@@ -132,36 +132,39 @@ function App() {
       )}
 
       {frame && (
-        <dl className="ble-frame">
-          <div className="ble-frame-row ble-frame-big" data-ok={fixOk ? 'true' : 'false'}>
-            <dt>Prędkość</dt>
-            <dd>{frame.speed_kmh.toFixed(1)} km/h</dd>
+        <>
+          <div className="speed-hero" data-ok={fixOk ? 'true' : 'false'}>
+            <span className="speed-hero-value">{Math.round(frame.speed_kmh)}</span>
+            <span className="speed-hero-unit">km/h</span>
           </div>
-          <div className="ble-frame-row ble-frame-big">
-            <dt>Przyspieszenie</dt>
-            <dd>{frame.accel_mss.toFixed(2)} m/s²</dd>
-          </div>
-          <div className="ble-frame-row">
-            <dt>Wysokość</dt>
-            <dd>{frame.altitude_m.toFixed(1)} m</dd>
-          </div>
-          <div className="ble-frame-row">
-            <dt>Dokładność</dt>
-            <dd>{frame.hacc_m.toFixed(1)} m</dd>
-          </div>
-          <div className="ble-frame-row">
-            <dt>Satelity</dt>
-            <dd>{frame.sats}</dd>
-          </div>
-          <div className="ble-frame-row">
-            <dt>Fix</dt>
-            <dd>{FIX_LABEL[frame.fix] ?? frame.fix}</dd>
-          </div>
-          <div className="ble-frame-row">
-            <dt>seq</dt>
-            <dd>{frame.seq}</dd>
-          </div>
-        </dl>
+
+          <dl className="ble-frame">
+            <div className="ble-frame-row ble-frame-big">
+              <dt>Przyspieszenie</dt>
+              <dd>{frame.accel_mss.toFixed(2)} m/s²</dd>
+            </div>
+            <div className="ble-frame-row">
+              <dt>Wysokość</dt>
+              <dd>{frame.altitude_m.toFixed(1)} m</dd>
+            </div>
+            <div className="ble-frame-row">
+              <dt>Dokładność</dt>
+              <dd>{frame.hacc_m.toFixed(1)} m</dd>
+            </div>
+            <div className="ble-frame-row">
+              <dt>Satelity</dt>
+              <dd>{frame.sats}</dd>
+            </div>
+            <div className="ble-frame-row">
+              <dt>Fix</dt>
+              <dd>{FIX_LABEL[frame.fix] ?? frame.fix}</dd>
+            </div>
+            <div className="ble-frame-row">
+              <dt>seq</dt>
+              <dd>{frame.seq}</dd>
+            </div>
+          </dl>
+        </>
       )}
 
       <SpeedChart     speedHistory={update?.speedHistory ?? []} />

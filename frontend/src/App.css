@@ -206,6 +206,38 @@
   line-height: 1;
 }
 
+/* ── Speed hero ───────────────────────────────────────────────────────────── */
+
+.speed-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  line-height: 1;
+}
+
+.speed-hero-value {
+  font-size: clamp(80px, 25vw, 160px);
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -3px;
+  color: var(--text-h);
+  transition: color 0.2s, opacity 0.2s;
+}
+
+.speed-hero-unit {
+  font-size: clamp(20px, 5vw, 32px);
+  font-family: var(--mono);
+  color: var(--text);
+  opacity: 0.6;
+  align-self: flex-end;
+  padding-bottom: 0.15em;
+}
+
+.speed-hero[data-ok='false'] .speed-hero-value {
+  color: var(--text);
+  opacity: 0.3;
+}
+
 /* ── Telemetry frame ──────────────────────────────────────────────────────── */
 
 .ble-frame {
