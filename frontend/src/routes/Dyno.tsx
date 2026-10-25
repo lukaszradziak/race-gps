@@ -26,6 +26,7 @@ export function Dyno() {
       const data: GpsData = parseGpsData(
         (event.target as BluetoothRemoteGATTCharacteristic).value,
       );
+      dyno.addRecord(data.speed, data.time, data.alt, data.satellites);
       setSpeed(data.speed);
     },
   });
@@ -152,11 +153,11 @@ export function Dyno() {
         </div>
         <div className="flex flex-col w-full">
           {connected ? (
-            <Button onClick={() => connect()} size="lg">
+            <Button onClick={() => disconnect()} size="lg">
               Disconnect
             </Button>
           ) : (
-            <Button onClick={() => disconnect()} size="lg">
+            <Button onClick={() => connect()} size="lg">
               Connect
             </Button>
           )}

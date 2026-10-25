@@ -34,7 +34,8 @@ export function parseToTime(value: string, previousValue?: string): number {
 
   const date = new Date();
 
-  date.setHours(
+  // GPS time must not depend on the local daylight saving time offset.
+  date.setUTCHours(
     parseInt(value.slice(0, 2)),
     parseInt(value.slice(2, 4)),
     parseInt(value.slice(4, 6)),

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { actualTime, averageValues, parseToTime } from "./number.ts";
 
 describe("actualTime", () => {
@@ -23,6 +23,10 @@ describe("averageValues", () => {
 });
 
 describe("parseToTime", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("test length validation", () => {
     expect(() => parseToTime("123456789")).toThrowError('Wrong value of time: "123456789"');
   });
@@ -32,7 +36,14 @@ describe("parseToTime", () => {
     expect(parseToTime("15511020") - parseToTime("15505960")).toBe(1060);
   });
 
-  test("test change day", () => {
+  test.each([
+    "2026-02-15T12:00:00Z",
+    "2026-03-29T12:00:00Z",
+    "2026-10-25T12:00:00Z",
+  ])("test change day on %s", (date) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(date));
+
     const sampleData: string[] = [
       "23592000",
       "23593000",
